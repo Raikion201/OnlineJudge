@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: online_judge_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # - ./init:/docker-entrypoint-initdb.d  #nếu muốn chạy file sql khởi tạo
+#    networks:      #về sau mở ra dùng nếu cần
+#      - mysql_net
+
+volumes:
+  mysql_data:
+
+#networks:
+#  mysql_net:
+#    driver: bridge
