@@ -18,7 +18,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-@Service
+@Setter
 @Builder
 public class Problem {
     @Id
@@ -72,14 +72,26 @@ public class Problem {
     private int totalAccepted = 0;
 
     @CreationTimestamp
-    @Column(name = "createdAt", updatable = false)
+    @Column(name = "created_at", updatable = false)
     private java.time.LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updateAt")
+    @Column(name = "update_at")
     private java.time.LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<TestCase> testCases = new HashSet<>();
+    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<ProblemExample> examples = new HashSet<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "problem_tags",
+            joinColumns = @JoinColumn(name = "problem_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Builder.Default
+    private Set<Tag> tags = new HashSet<>();
 }
