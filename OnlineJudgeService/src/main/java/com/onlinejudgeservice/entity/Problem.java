@@ -4,12 +4,9 @@ import com.onlinejudgeservice.enums.Difficulty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,62 +23,63 @@ public class Problem {
     private Long id;
 
     @Column(name = "title")
-
     private String title;
-    @Column(name = "description")
 
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-    @Column(name = "input_format")
 
-    private String input_format;
-    @Column(name = "output_format")
+    @Column(name = "input_format", columnDefinition = "TEXT")
+    private String inputFormat;
 
-    private String output_format;
-    @Column(name = "constraints")
+    @Column(name = "output_format", columnDefinition = "TEXT")
+    private String outputFormat;
 
+    @Column(name = "constraints", columnDefinition = "TEXT")
     private String constraints;
+
     @Column(name = "difficulty")
-
+    @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
+
     @Column(name = "time_limit")
-
     @Builder.Default
-    private int time_limit = 1000;
+    private int timeLimit = 1000;
+
     @Column(name = "memory_limit")
-
     @Builder.Default
-    private int memory_limit = 256;
+    private int memoryLimit = 256;
+
     @Column(name = "created_by")
-
     private Long createdBy;
-    @Column(name = "is_public")
 
+    @Column(name = "is_public")
     @Builder.Default
     private boolean isPublic = false;
-    @Column(name = "acceptance_rate")
 
+    @Column(name = "acceptance_rate")
     @Builder.Default
     private double acceptanceRate = 0.00;
-    @Column(name = "total_submissions")
 
+    @Column(name = "total_submissions")
     @Builder.Default
     private int totalSubmissions = 0;
-    @Column(name = "total_accepted")
 
+    @Column(name = "total_accepted")
     @Builder.Default
     private int totalAccepted = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    private java.time.LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "update_at")
-    private java.time.LocalDateTime updatedAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<TestCase> testCases = new HashSet<>();
+
     @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private Set<ProblemExample> examples = new HashSet<>();

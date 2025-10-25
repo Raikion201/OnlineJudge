@@ -21,7 +21,8 @@ public class TestCaseRequest {
     private boolean isSample;
 
     @Min(value = 1, message = "Points must be at least 1")
-    private int points;
+    @Builder.Default
+    private int points = 10; // Add default value
 
     private Integer timeLimit;
 
