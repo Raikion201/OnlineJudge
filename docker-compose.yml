@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: problem-service-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: problem_service_db
+      MYSQL_USER: problemuser
+      MYSQL_PASSWORD: problempass123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - problem-service-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Problem Service
+  problem-service:
+    build:
+      context: ./ProblemService
+      dockerfile: Dockerfile
+    container_name: problem-service
+    restart: always
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/problem_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: problemuser
+      SPRING_DATASOURCE_PASSWORD: problempass123
+      SPRING_CLOUD_CONFIG_ENABLED: false
+      EUREKA_CLIENT_ENABLED: false
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - problem-service-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  problem-service-network:
+    driver: bridge

@@ -1,0 +1,255 @@
+{
+  "info": {
+    "name": "Problem Service API",
+    "description": "Complete API collection for Online Judge Problem Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Problems",
+      "item": [
+        {
+          "name": "Get All Problems",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Problem - Two Sum (Easy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Two Sum\",\n  \"description\": \"Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.\",\n  \"inputFormat\": \"Line 1: integer n (1 ≤ n ≤ 10^4)\\nLine 2: n space-separated integers nums[i] (-10^9 ≤ nums[i] ≤ 10^9)\\nLine 3: integer target (-10^9 ≤ target ≤ 10^9)\",\n  \"outputFormat\": \"Two space-separated integers: index1 and index2 (0-indexed)\",\n  \"constraints\": \"2 ≤ nums.length ≤ 10^4\\n-10^9 ≤ nums[i] ≤ 10^9\\n-10^9 ≤ target ≤ 10^9\\nOnly one valid answer exists.\",\n  \"difficulty\": \"EASY\",\n  \"timeLimit\": 1000,\n  \"memoryLimit\": 256,\n  \"examples\": [\n    {\n      \"input\": \"4\\n2 7 11 15\\n9\",\n      \"output\": \"0 1\",\n      \"explanation\": \"Because nums[0] + nums[1] == 9, we return [0, 1].\",\n      \"ordering\": 1\n    },\n    {\n      \"input\": \"3\\n3 2 4\\n6\",\n      \"output\": \"1 2\",\n      \"explanation\": \"Because nums[1] + nums[2] == 6, we return [1, 2].\",\n      \"ordering\": 2\n    }\n  ],\n  \"testCases\": [\n    {\n      \"input\": \"4\\n2 7 11 15\\n9\",\n      \"expectedOutput\": \"0 1\",\n      \"isSample\": true,\n      \"timeLimit\": 1000,\n      \"memoryLimit\": 256,\n      \"ordering\": 1\n    },\n    {\n      \"input\": \"3\\n3 2 4\\n6\",\n      \"expectedOutput\": \"1 2\",\n      \"isSample\": true,\n      \"timeLimit\": 1000,\n      \"memoryLimit\": 256,\n      \"ordering\": 2\n    },\n    {\n      \"input\": \"2\\n3 3\\n6\",\n      \"expectedOutput\": \"0 1\",\n      \"isSample\": false,\n      \"timeLimit\": 1000,\n      \"memoryLimit\": 256,\n      \"ordering\": 3\n    }\n  ],\n  \"tagIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems"]
+            }
+          }
+        },
+        {
+          "name": "Create Problem - Reverse String (Easy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Reverse String\",\n  \"description\": \"Write a function that reverses a string. The input string is given as an array of characters s.\",\n  \"inputFormat\": \"Line 1: A string s consisting of printable ASCII characters\",\n  \"outputFormat\": \"The reversed string\",\n  \"constraints\": \"1 ≤ s.length ≤ 10^5\\ns[i] is a printable ASCII character\",\n  \"difficulty\": \"EASY\",\n  \"timeLimit\": 1000,\n  \"memoryLimit\": 128,\n  \"examples\": [\n    {\n      \"input\": \"hello\",\n      \"output\": \"olleh\",\n      \"explanation\": \"The string 'hello' becomes 'olleh' after reversal.\",\n      \"ordering\": 1\n    }\n  ],\n  \"testCases\": [\n    {\n      \"input\": \"hello\",\n      \"expectedOutput\": \"olleh\",\n      \"isSample\": true,\n      \"timeLimit\": 1000,\n      \"memoryLimit\": 128,\n      \"ordering\": 1\n    }\n  ],\n  \"tagIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems"]
+            }
+          }
+        },
+        {
+          "name": "Get Problem by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Problem",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Two Sum - Updated\",\n  \"description\": \"Updated description with more details.\",\n  \"difficulty\": \"MEDIUM\",\n  \"timeLimit\": 2000,\n  \"memoryLimit\": 512\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Problem",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/problems/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "problems", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "Get All Tags",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Create Tag - Array",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Array\",\n  \"slug\": \"array\",\n  \"description\": \"Problems involving array data structures and operations\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Create Tag - Hash Table",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hash Table\",\n  \"slug\": \"hash-table\",\n  \"description\": \"Problems using hash tables for efficient lookups\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Create Tag - Dynamic Programming",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dynamic Programming\",\n  \"slug\": \"dynamic-programming\",\n  \"description\": \"Problems solved using dynamic programming techniques\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags"]
+            }
+          }
+        },
+        {
+          "name": "Get Tag by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Tag",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Array - Updated\",\n  \"slug\": \"array-updated\",\n  \"description\": \"Updated description for array tag\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tags/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "tags", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

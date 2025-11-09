@@ -1,10 +1,13 @@
 spring:
   application:
     name: problem-service
+  cloud:
+    config:
+      enabled: ${SPRING_CLOUD_CONFIG_ENABLED:false}
   datasource:
-    url: jdbc:mysql://localhost:3307/${MYSQL_DATABASE:onlinejudge}
-    username: ${MYSQL_USER:myuser}
-    password: ${MYSQL_PASSWORD:mypassword}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/problem_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:problemuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:problempass123}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -16,11 +19,12 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
 server:
-  port: 0
+  port: ${SERVER_PORT:8080}
 
 eureka:
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:false}
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     instance-id: ${spring.application.name}:${random.uuid}
