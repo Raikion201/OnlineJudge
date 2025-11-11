@@ -1,10 +1,10 @@
 spring:
   application:
-    name: user-service
+    name: problem-service
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3308}/user_service_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: ${DB_USERNAME:useruser}
-    password: ${DB_PASSWORD:userpass123}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/problem_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:problemuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:problempass123}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -12,11 +12,11 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
 
 server:
-  port: ${SERVER_PORT:8082}
+  port: ${SERVER_PORT:8080}
 
 eureka:
   client:
@@ -24,5 +24,4 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
-    prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
