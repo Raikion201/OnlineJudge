@@ -78,7 +78,7 @@ services:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: rootpass123
-      MYSQL_DATABASE: problems_db
+      MYSQL_DATABASE: problem_service_db
       MYSQL_USER: problemuser
       MYSQL_PASSWORD: problempass123
     volumes:
