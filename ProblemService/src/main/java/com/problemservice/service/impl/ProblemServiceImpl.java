@@ -317,6 +317,47 @@ public class ProblemServiceImpl implements ProblemService {
     }
 
     private ProblemResponse convertToProblemResponse(Problem problem) {
+        // Convert test cases
+        Set<com.problemservice.dto.response.TestCaseResponse> testCaseResponses = problem.getTestCases() != null ?
+                problem.getTestCases().stream()
+                        .map(tc -> com.problemservice.dto.response.TestCaseResponse.builder()
+                                .id(tc.getId())
+                                .input(tc.getInput())
+                                .expectedOutput(tc.getExpectedOutput())
+                                .isSample(tc.isSample())
+                                .points(tc.getPoints())
+                                .timeLimit(tc.getTimeLimit())
+                                .memoryLimit(tc.getMemoryLimit())
+                                .ordering(tc.getOrdering())
+                                .createdAt(tc.getCreatedAt())
+                                .build())
+                        .collect(Collectors.toSet()) : new HashSet<>();
+
+        // Convert examples
+        Set<com.problemservice.dto.response.ProblemExampleResponse> exampleResponses = problem.getExamples() != null ?
+                problem.getExamples().stream()
+                        .map(ex -> com.problemservice.dto.response.ProblemExampleResponse.builder()
+                                .id(ex.getId())
+                                .input(ex.getInput())
+                                .output(ex.getOutput())
+                                .explanation(ex.getExplanation())
+                                .ordering(ex.getOrdering())
+                                .createdAt(ex.getCreatedAt())
+                                .build())
+                        .collect(Collectors.toSet()) : new HashSet<>();
+
+        // Convert tags
+        Set<com.problemservice.dto.response.TagResponse> tagResponses = problem.getTags() != null ?
+                problem.getTags().stream()
+                        .map(tag -> com.problemservice.dto.response.TagResponse.builder()
+                                .id(tag.getId())
+                                .name(tag.getName())
+                                .slug(tag.getSlug())
+                                .description(tag.getDescription())
+                                .createdAt(tag.getCreatedAt())
+                                .build())
+                        .collect(Collectors.toSet()) : new HashSet<>();
+
         return ProblemResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
@@ -333,7 +374,9 @@ public class ProblemServiceImpl implements ProblemService {
                 .totalAccepted(problem.getTotalAccepted())
                 .createdAt(problem.getCreatedAt())
                 .updatedAt(problem.getUpdatedAt())
-                // Map test cases, examples and tags (abbreviated for brevity)
+                .testCases(testCaseResponses)
+                .examples(exampleResponses)
+                .tags(tagResponses)
                 .build();
     }
 

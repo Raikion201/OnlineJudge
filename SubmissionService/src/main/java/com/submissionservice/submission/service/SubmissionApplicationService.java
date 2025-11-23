@@ -17,9 +17,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class SubmissionApplicationService {
@@ -79,20 +79,16 @@ public class SubmissionApplicationService {
 
         // Publish submission_id to submission.jobs Kafka topic
         try {
-            kafkaTemplate.send(SUBMISSION_JOBS_TOPIC, saved.getId())
-                    .addCallback(new ListenableFutureCallback<SendResult<String, Long>>() {
-                        @Override
-                        public void onSuccess(SendResult<String, Long> result) {
-                            log.info("Successfully published submission {} to topic {}", 
-                                    saved.getId(), SUBMISSION_JOBS_TOPIC);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable ex) {
-                            log.error("Failed to publish submission {} to topic {}", 
-                                    saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
-                        }
-                    });
+            CompletableFuture<SendResult<String, Long>> future = kafkaTemplate.send(SUBMISSION_JOBS_TOPIC, saved.getId());
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("Successfully published submission {} to topic {}", 
+                            saved.getId(), SUBMISSION_JOBS_TOPIC);
+                } else {
+                    log.error("Failed to publish submission {} to topic {}", 
+                            saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
+                }
+            });
         } catch (Exception ex) {
             log.error("Error publishing submission {} to Kafka topic {}", 
                     saved.getId(), SUBMISSION_JOBS_TOPIC, ex);

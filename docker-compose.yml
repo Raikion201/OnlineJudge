@@ -183,11 +183,14 @@ services:
       SERVER_PORT: 8083
       EUREKA_CLIENT_ENABLED: "true"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       config-server:
         condition: service_healthy
       discovery-service:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - microservices-network
 
@@ -219,6 +222,33 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
+
+  # Code Executor Service
+  code-executor-service:
+    profiles: ["services"]
+    build:
+      context: ./CodeExecutorService
+      dockerfile: Dockerfile
+    container_name: code-executor-service
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SERVER_PORT: 8086
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - microservices-network
+    # Run with additional privileges for ulimit (required for resource limits)
+    cap_add:
+      - SYS_RESOURCE
+    security_opt:
+      - seccomp:unconfined
 
   # API Gateway
   api-gateway:
@@ -342,13 +372,14 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://localhost:29093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
       - "9093:9092"
+      - "29093:29092"
     depends_on:
       zookeeper:
         condition: service_started

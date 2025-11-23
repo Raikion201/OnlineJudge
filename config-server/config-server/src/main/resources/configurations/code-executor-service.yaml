@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: code-executor-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29093}
+server:
+  port: ${SERVER_PORT:8086}
+
