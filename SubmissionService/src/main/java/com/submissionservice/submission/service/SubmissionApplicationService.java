@@ -1,14 +1,18 @@
 package com.submissionservice.submission.service;
 
 import com.submissionservice.submission.client.JudgeClient;
+import com.submissionservice.submission.client.ProblemClient;
+import com.submissionservice.submission.client.UserClient;
 import com.submissionservice.submission.client.dto.SubmissionDispatchRequest;
 import com.submissionservice.submission.dto.SubmissionRequest;
 import com.submissionservice.submission.dto.SubmissionResponse;
 import com.submissionservice.submission.dto.SubmissionStatusUpdateRequest;
+import com.submissionservice.submission.exception.BadRequestException;
 import com.submissionservice.submission.exception.SubmissionNotFoundException;
 import com.submissionservice.submission.model.Submission;
 import com.submissionservice.submission.model.SubmissionStatus;
 import com.submissionservice.submission.repository.SubmissionRepository;
+import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,14 +27,45 @@ public class SubmissionApplicationService {
 
     private final SubmissionRepository submissionRepository;
     private final JudgeClient judgeClient;
+    private final ProblemClient problemClient;
+    private final UserClient userClient;
 
-    public SubmissionApplicationService(SubmissionRepository submissionRepository, JudgeClient judgeClient) {
+    public SubmissionApplicationService(SubmissionRepository submissionRepository, 
+                                        JudgeClient judgeClient,
+                                        ProblemClient problemClient,
+                                        UserClient userClient) {
         this.submissionRepository = submissionRepository;
         this.judgeClient = judgeClient;
+        this.problemClient = problemClient;
+        this.userClient = userClient;
     }
 
     @Transactional
     public SubmissionResponse createSubmission(SubmissionRequest request, String userId) {
+        // Validate problem exists
+        try {
+            problemClient.getProblemById(request.problemId());
+            log.debug("Problem {} validated", request.problemId());
+        } catch (FeignException.NotFound ex) {
+            log.warn("Problem {} not found", request.problemId());
+            throw new BadRequestException("Problem not found with id: " + request.problemId());
+        } catch (FeignException ex) {
+            log.error("Error validating problem {}: {}", request.problemId(), ex.getMessage());
+            throw new BadRequestException("Failed to validate problem: " + ex.getMessage());
+        }
+
+        // Validate user exists
+        try {
+            userClient.getUserByKeycloakId(userId);
+            log.debug("User {} validated", userId);
+        } catch (FeignException.NotFound ex) {
+            log.warn("User {} not found", userId);
+            throw new BadRequestException("User not found with keycloakId: " + userId);
+        } catch (FeignException ex) {
+            log.error("Error validating user {}: {}", userId, ex.getMessage());
+            throw new BadRequestException("Failed to validate user: " + ex.getMessage());
+        }
+
         Submission submission = new Submission();
         submission.setProblemId(request.problemId());
         submission.setUserId(userId);

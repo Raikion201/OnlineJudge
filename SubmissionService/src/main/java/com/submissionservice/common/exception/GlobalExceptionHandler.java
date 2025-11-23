@@ -1,5 +1,6 @@
 package com.submissionservice.common.exception;
 
+import com.submissionservice.submission.exception.BadRequestException;
 import com.submissionservice.submission.exception.SubmissionNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SubmissionNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(SubmissionNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorBody(HttpStatus.NOT_FOUND, ex.getMessage()));
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorBody(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -15,6 +15,8 @@ public interface UserService {
 
     UserResponse getUserByEmail(String email);
 
+    UserResponse getUserByKeycloakId(String keycloakId);
+
     UserResponse createUser(UserRequest request);
 
     UserResponse updateUser(Long id, UserRequest request);

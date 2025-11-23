@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class UserResponse {
 
     private Long id;
+    private String keycloakId;
     private String username;
     private String email;
     private String fullName;

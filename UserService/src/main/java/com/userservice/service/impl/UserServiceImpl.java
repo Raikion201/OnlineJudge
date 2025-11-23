@@ -59,6 +59,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserByKeycloakId(String keycloakId) {
+        log.info("Getting user by keycloakId: {}", keycloakId);
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with keycloakId: " + keycloakId));
+        return userMapper.toResponse(user);
+    }
+
+    @Override
     @Transactional
     public UserResponse createUser(UserRequest request) {
         log.info("Creating new user with username: {}", request.getUsername());

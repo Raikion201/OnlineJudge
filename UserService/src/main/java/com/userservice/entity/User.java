@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_username", columnList = "username"),
-        @Index(name = "idx_email", columnList = "email")
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_keycloak_id", columnList = "keycloak_id")
 })
 @Getter
 @Setter
@@ -22,6 +23,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "keycloak_id", unique = true, length = 64)
+    private String keycloakId;
 
     @Column(nullable = false, unique = true, length = 50)
     private String username;
