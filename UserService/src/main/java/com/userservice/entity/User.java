@@ -43,6 +43,10 @@ public class User {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @Builder.Default
+    @Column(name = "solve_count")
+    private Integer solveCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

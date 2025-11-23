@@ -1,9 +1,7 @@
 package com.submissionservice.submission.service;
 
-import com.submissionservice.submission.client.JudgeClient;
 import com.submissionservice.submission.client.ProblemClient;
 import com.submissionservice.submission.client.UserClient;
-import com.submissionservice.submission.client.dto.SubmissionDispatchRequest;
 import com.submissionservice.submission.dto.SubmissionRequest;
 import com.submissionservice.submission.dto.SubmissionResponse;
 import com.submissionservice.submission.dto.SubmissionStatusUpdateRequest;
@@ -15,8 +13,11 @@ import com.submissionservice.submission.repository.SubmissionRepository;
 import feign.FeignException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.concurrent.ListenableFutureCallback;
 
 import java.util.List;
 
@@ -24,18 +25,19 @@ import java.util.List;
 public class SubmissionApplicationService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionApplicationService.class);
+    private static final String SUBMISSION_JOBS_TOPIC = "submission.jobs";
 
     private final SubmissionRepository submissionRepository;
-    private final JudgeClient judgeClient;
+    private final KafkaTemplate<String, Long> kafkaTemplate;
     private final ProblemClient problemClient;
     private final UserClient userClient;
 
     public SubmissionApplicationService(SubmissionRepository submissionRepository, 
-                                        JudgeClient judgeClient,
+                                        KafkaTemplate<String, Long> kafkaTemplate,
                                         ProblemClient problemClient,
                                         UserClient userClient) {
         this.submissionRepository = submissionRepository;
-        this.judgeClient = judgeClient;
+        this.kafkaTemplate = kafkaTemplate;
         this.problemClient = problemClient;
         this.userClient = userClient;
     }
@@ -75,13 +77,26 @@ public class SubmissionApplicationService {
 
         Submission saved = submissionRepository.save(submission);
 
+        // Publish submission_id to submission.jobs Kafka topic
         try {
-            judgeClient.dispatchSubmission(new SubmissionDispatchRequest(saved.getId()));
-            saved.setStatus(SubmissionStatus.DISPATCHED);
+            kafkaTemplate.send(SUBMISSION_JOBS_TOPIC, saved.getId())
+                    .addCallback(new ListenableFutureCallback<SendResult<String, Long>>() {
+                        @Override
+                        public void onSuccess(SendResult<String, Long> result) {
+                            log.info("Successfully published submission {} to topic {}", 
+                                    saved.getId(), SUBMISSION_JOBS_TOPIC);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable ex) {
+                            log.error("Failed to publish submission {} to topic {}", 
+                                    saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
+                        }
+                    });
         } catch (Exception ex) {
-            log.error("Failed to dispatch submission {} to judge", saved.getId(), ex);
-            saved.setStatus(SubmissionStatus.SYSTEM_ERROR);
-            saved.setResultMessage("Dispatch failed: " + ex.getMessage());
+            log.error("Error publishing submission {} to Kafka topic {}", 
+                    saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
+            // Note: We don't change status here as per requirements - status remains PENDING
         }
 
         return toResponse(saved);

@@ -21,6 +21,7 @@ public class UserResponse {
     private String avatar;
     private String bio;
     private Boolean isActive;
+    private Integer solveCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

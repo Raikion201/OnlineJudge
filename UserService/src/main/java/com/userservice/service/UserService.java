@@ -21,5 +21,9 @@ public interface UserService {
 
     UserResponse updateUser(Long id, UserRequest request);
 
+    UserResponse getUserMe(String keycloakId);
+
+    UserResponse updateUserMe(String keycloakId, UserRequest request);
+
     void deleteUser(Long id);
 }

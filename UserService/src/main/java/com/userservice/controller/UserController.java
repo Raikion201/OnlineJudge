@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
+    private static final String USER_HEADER = "X-User-Id";
     private final UserService userService;
 
     @GetMapping
@@ -43,6 +44,18 @@ public class UserController {
     @GetMapping("/keycloak/{keycloakId}")
     public ResponseEntity<UserResponse> getUserByKeycloakId(@PathVariable String keycloakId) {
         return ResponseEntity.ok(userService.getUserByKeycloakId(keycloakId));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getUserMe(@RequestHeader(USER_HEADER) String keycloakId) {
+        return ResponseEntity.ok(userService.getUserMe(keycloakId));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<UserResponse> updateUserMe(
+            @RequestHeader(USER_HEADER) String keycloakId,
+            @Valid @RequestBody UserRequest request) {
+        return ResponseEntity.ok(userService.updateUserMe(keycloakId, request));
     }
 
     @PostMapping

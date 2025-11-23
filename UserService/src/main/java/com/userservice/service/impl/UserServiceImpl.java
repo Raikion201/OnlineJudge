@@ -117,6 +117,40 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserMe(String keycloakId) {
+        log.info("Getting current user profile for keycloakId: {}", keycloakId);
+        return getUserByKeycloakId(keycloakId);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserMe(String keycloakId, UserRequest request) {
+        log.info("Updating current user profile for keycloakId: {}", keycloakId);
+
+        User user = userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with keycloakId: " + keycloakId));
+
+        // Check if username is being changed and if it already exists
+        if (!user.getUsername().equals(request.getUsername()) &&
+                userRepository.existsByUsername(request.getUsername())) {
+            throw new BadRequestException("Username already exists: " + request.getUsername());
+        }
+
+        // Check if email is being changed and if it already exists
+        if (!user.getEmail().equals(request.getEmail()) &&
+                userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email already exists: " + request.getEmail());
+        }
+
+        userMapper.updateEntityFromRequest(request, user);
+        User updatedUser = userRepository.save(user);
+
+        log.info("User profile updated successfully for keycloakId: {}", keycloakId);
+        return userMapper.toResponse(updatedUser);
+    }
+
+    @Override
     @Transactional
     public void deleteUser(Long id) {
         log.info("Deleting user with id: {}", id);
