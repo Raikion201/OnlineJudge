@@ -16,8 +16,17 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29093}
+  
+  # OAuth2 Resource Server Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8321/realms/online-judge}
+
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT:8084}
+
 eureka:
   client:
     enabled: ${EUREKA_CLIENT_ENABLED:true}
@@ -26,3 +35,7 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
+
+logging:
+  level:
+    org.springframework.security: INFO

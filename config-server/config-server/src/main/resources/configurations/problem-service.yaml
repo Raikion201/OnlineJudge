@@ -14,9 +14,16 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
+  
+  # OAuth2 Resource Server Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8321/realms/online-judge}
 
 server:
-  port: ${SERVER_PORT:8080}
+  port: ${SERVER_PORT:8083}
 
 eureka:
   client:
@@ -25,3 +32,7 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     instance-id: ${spring.application.name}:${random.uuid}
+
+logging:
+  level:
+    org.springframework.security: INFO
