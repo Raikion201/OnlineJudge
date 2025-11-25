@@ -1,16 +1,6 @@
 spring:
   application:
     name: api-gateway
-  
-  # OAuth2 Resource Server Configuration
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          # Keycloak issuer URI - Keycloak sẽ provide public key để verify JWT
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8321/realms/online-judge}
-          # JWK Set URI (optional, auto-discovered from issuer-uri)
-          # jwk-set-uri: http://localhost:8321/realms/online-judge/protocol/openid-connect/certs
 
 server:
   port: ${SERVER_PORT:8085}
@@ -23,9 +13,3 @@ eureka:
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${random.uuid}
-
-# Logging để debug
-logging:
-  level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
