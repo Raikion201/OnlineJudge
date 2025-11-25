@@ -14,26 +14,31 @@ public class GatewayConfig {
                 // User Service routes
                 .route("user-service", r -> r
                         .path("/api/v1/users/**")
+                        .filters(f -> f.tokenRelay())
                         .uri("lb://user-service"))
                 
                 // Problem Service routes
                 .route("problem-service", r -> r
                         .path("/api/v1/problems/**", "/api/v1/tags/**")
+                        .filters(f -> f.tokenRelay())
                         .uri("lb://problem-service"))
                 
                 // Submission Service routes
                 .route("submission-service", r -> r
                         .path("/api/v1/submissions/**")
+                        .filters(f -> f.tokenRelay())
                         .uri("lb://submission-service"))
                 
                 // Judge Service routes
                 .route("judge-service", r -> r
                         .path("/api/v1/judge/**")
+                        .filters(f -> f.tokenRelay())
                         .uri("lb://judge-service"))
                 
                 // Code Executor Service routes
                 .route("code-executor-service", r -> r
                         .path("/api/v1/executor/**")
+                        .filters(f -> f.tokenRelay())
                         .uri("lb://code-executor-service"))
                 
                 .build();

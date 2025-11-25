@@ -266,7 +266,6 @@ services:
       EUREKA_CLIENT_ENABLED: "true"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
       KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/online-judge
-      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/online-judge/protocol/openid-connect/certs
     depends_on:
       config-server:
         condition: service_healthy
@@ -303,7 +302,7 @@ services:
     profiles: ["infra"]
     image: quay.io/keycloak/keycloak:25.0.6
     container_name: keycloak
-    command: start --http-port=8080 --proxy=edge --hostname-strict=false --import-realm
+    command: start --http-port=8080 --hostname-strict=false --import-realm
     restart: always
     environment:
       KC_DB: postgres
@@ -312,8 +311,9 @@ services:
       KC_DB_PASSWORD: keycloakpass
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME_URL: http://keycloak:8080
       KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
       KC_HTTP_ENABLED: "true"
       KC_HTTP_RELATIVE_PATH: /
       # Import realm on start
@@ -328,11 +328,11 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK' || exit 1"]
+      interval: 15s
+      timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 90s
 
   redis:
     profiles: ["infra"]
