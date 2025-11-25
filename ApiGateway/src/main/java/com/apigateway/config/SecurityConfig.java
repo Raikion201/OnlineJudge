@@ -50,12 +50,28 @@ public class SecurityConfig {
                 .pathMatchers("/public/**").permitAll()
                 .pathMatchers("/actuator/**").permitAll()
                 
-                // Public GET for problems (anyone can view)
-                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems", "/api/v1/problems/**").permitAll()
+                // Examples and testcases management - MORE SPECIFIC RULES MUST COME FIRST
+                // Admin-only mutations
+                .pathMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/problems/*/examples").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/problems/*/examples/*").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/problems/*/examples/*").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/problems/*/testcases").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/problems/*/testcases/*").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/problems/*/testcases/*").hasRole("Admin")
+                
+                // Authenticated GET for examples and testcases
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems/*/examples", "/api/v1/problems/*/examples/*").authenticated()
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems/*/testcases", "/api/v1/problems/*/testcases/*").authenticated()
+                
+                // Public GET for problems (anyone can view) - AFTER more specific rules
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems", "/api/v1/problems/*").permitAll()
                 .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tags", "/api/v1/tags/**").permitAll()
                 
-                // Protected endpoints với roles (POST, PUT, DELETE require auth)
-                .pathMatchers("/api/v1/problems/**").hasAnyRole("User", "Admin")
+                // Protected endpoints with roles (POST, PUT, DELETE require auth)
+                .pathMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/problems").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/problems/*").hasRole("Admin")
+                .pathMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/problems/*").hasRole("Admin")
+                
                 .pathMatchers("/api/v1/tags/**").hasAnyRole("User", "Admin")
                 .pathMatchers("/api/v1/submissions/**").hasAnyRole("User", "Admin")
                 .pathMatchers("/api/v1/judge/**").hasAnyRole("User", "Admin")

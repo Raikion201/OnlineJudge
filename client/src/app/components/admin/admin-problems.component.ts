@@ -91,6 +91,7 @@ interface Problem {
                     </span>
                   </td>
                   <td class="actions">
+                    <button (click)="manageTestCases(problem.id!)" class="btn-manage">Test Cases</button>
                     <button (click)="editProblem(problem)" class="btn-edit">Edit</button>
                     <button (click)="deleteProblem(problem.id!)" class="btn-delete">Delete</button>
                   </td>
@@ -249,6 +250,17 @@ interface Problem {
     .btn-edit:hover {
       background: #007bff;
       border-color: #007bff;
+      color: white;
+    }
+
+    .btn-manage {
+      border-color: #28a745;
+      color: #28a745;
+    }
+
+    .btn-manage:hover {
+      background: #28a745;
+      border-color: #28a745;
       color: white;
     }
 
@@ -454,5 +466,9 @@ export class AdminProblemsComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/problems']);
+  }
+
+  manageTestCases(problemId: number) {
+    this.router.navigate(['/admin/problems', problemId, 'testcases']);
   }
 }

@@ -201,9 +201,9 @@ interface ProblemDetail {
 
     .problem-panel, .code-panel {
       background: white;
-      border-radius: 8px;
+      border-radius: 12px;
       padding: 30px;
-      border: 1px solid #e0e0e0;
+      border: 2px solid #e0e0e0;
       overflow-y: auto;
       max-height: calc(100vh - 140px);
     }
@@ -218,29 +218,32 @@ interface ProblemDetail {
     .problem-header h1 {
       font-size: 28px;
       margin: 0;
-      color: #333;
+      color: #000;
+      font-weight: 800;
     }
 
     .difficulty {
-      padding: 6px 16px;
+      padding: 8px 16px;
       border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .difficulty-easy {
-      background: #d4edda;
-      color: #155724;
+      background: #000;
+      color: #90EE90;
     }
 
     .difficulty-medium {
-      background: #fff3cd;
-      color: #856404;
+      background: #000;
+      color: #FFD700;
     }
 
     .difficulty-hard {
-      background: #f8d7da;
-      color: #721c24;
+      background: #000;
+      color: #FF6B6B;
     }
 
     .tags {
@@ -251,11 +254,12 @@ interface ProblemDetail {
     }
 
     .tag {
-      padding: 4px 12px;
-      background: #f0f0f0;
-      border-radius: 4px;
+      padding: 6px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
       font-size: 13px;
-      color: #666;
+      color: #333;
+      border: 1px solid #e0e0e0;
     }
 
     .meta {
@@ -263,10 +267,11 @@ interface ProblemDetail {
       gap: 20px;
       margin-bottom: 30px;
       padding: 15px;
-      background: #f8f9fa;
-      border-radius: 6px;
+      background: #000;
+      border-radius: 8px;
       font-size: 14px;
-      color: #666;
+      color: white;
+      font-weight: 600;
     }
 
     .section {
@@ -276,48 +281,73 @@ interface ProblemDetail {
     .section h3 {
       font-size: 20px;
       margin: 0 0 15px 0;
-      color: #333;
-      border-bottom: 2px solid #e0e0e0;
+      color: #000;
+      font-weight: 700;
+      border-bottom: 3px solid #000;
       padding-bottom: 10px;
     }
 
     .content {
       line-height: 1.8;
-      color: #555;
+      color: #333;
       white-space: pre-wrap;
     }
 
     .example {
       margin-bottom: 20px;
-      border: 1px solid #e0e0e0;
-      border-radius: 6px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
       overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .example:hover {
+      border-color: #000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .example-title {
-      background: #f8f9fa;
-      padding: 10px 15px;
-      font-weight: 600;
-      border-bottom: 1px solid #e0e0e0;
+      background: #000;
+      color: white;
+      padding: 12px 15px;
+      font-weight: 700;
+      font-size: 15px;
     }
 
     .example-block {
       padding: 15px;
       border-bottom: 1px solid #f0f0f0;
+      background: white;
     }
 
     .example-block:last-child {
       border-bottom: none;
     }
 
+    .example-block strong {
+      color: #000;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 8px;
+    }
+
     .example-block pre {
-      background: #f8f9fa;
-      padding: 10px;
-      border-radius: 4px;
-      margin: 8px 0 0 0;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      margin: 0;
       overflow-x: auto;
-      font-family: 'Courier New', monospace;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
       font-size: 14px;
+      line-height: 1.6;
+      color: #000;
+    }
+
+    .example-block p {
+      margin: 0;
+      color: #333;
+      line-height: 1.6;
     }
 
     .panel-header {

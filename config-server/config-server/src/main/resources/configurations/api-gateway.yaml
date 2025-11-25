@@ -7,6 +7,13 @@ spring:
         locator:
           enabled: true
           lower-case-service-id: true
+      routes:
+        - id: problem-service
+          uri: lb://PROBLEM-SERVICE
+          predicates:
+            - Path=/api/v1/problems/**
+          filters:
+            - StripPrefix=0
       globalcors:
         cors-configurations:
           '[/**]':
