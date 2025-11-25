@@ -2,9 +2,10 @@
   "realm": "online-judge",
   "enabled": true,
   "displayName": "Online Judge",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
+  "defaultRoles": ["User"],
   "roles": {
     "realm": [
       { "name": "User", "description": "Standard user role" },

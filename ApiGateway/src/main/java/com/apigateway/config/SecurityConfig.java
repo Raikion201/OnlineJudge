@@ -40,14 +40,21 @@ public class SecurityConfig {
         log.info("JWT Issuer URI: {}", issuerUri);
         
         http
+            .cors(cors -> cors.disable()) // Will use global CORS config
             .csrf(csrf -> csrf.disable())
             .authorizeExchange(exchanges -> exchanges
+                // Allow CORS preflight requests
+                .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints
                 .pathMatchers("/api/v1/users/register", "/api/v1/users/login").permitAll()
                 .pathMatchers("/public/**").permitAll()
                 .pathMatchers("/actuator/**").permitAll()
                 
-                // Protected endpoints với roles
+                // Public GET for problems (anyone can view)
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems", "/api/v1/problems/**").permitAll()
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tags", "/api/v1/tags/**").permitAll()
+                
+                // Protected endpoints với roles (POST, PUT, DELETE require auth)
                 .pathMatchers("/api/v1/problems/**").hasAnyRole("User", "Admin")
                 .pathMatchers("/api/v1/tags/**").hasAnyRole("User", "Admin")
                 .pathMatchers("/api/v1/submissions/**").hasAnyRole("User", "Admin")
