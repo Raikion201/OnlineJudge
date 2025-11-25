@@ -1,7 +1,7 @@
 package com.codeexecutor.listener;
 
-import com.codeexecutor.dto.JudgeExecuteRequest;
-import com.codeexecutor.dto.JudgeResult;
+import com.judgeservice.dto.JudgeExecuteRequest;
+import com.judgeservice.dto.JudgeResult;
 import com.codeexecutor.service.CodeExecutionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

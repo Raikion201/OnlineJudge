@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { SubmissionApiService, SubmissionPayload, SubmissionResponse } from '../../services/submission-api.service';
 
 interface ProblemDetail {
   id: number;
@@ -20,6 +21,13 @@ interface ProblemDetail {
     output: string;
     explanation?: string;
   }[];
+}
+
+interface SubmissionFeedback {
+  accepted: boolean;
+  verdict: string;
+  message?: string;
+  submissionId?: number;
 }
 
 @Component({
@@ -474,6 +482,7 @@ interface ProblemDetail {
 })
 export class ProblemDetailComponent implements OnInit {
   private http = inject(HttpClient);
+  private submissionApi = inject(SubmissionApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -485,7 +494,7 @@ export class ProblemDetailComponent implements OnInit {
   code = '';
   submitting = signal(false);
   running = signal(false);
-  submitResult = signal<{accepted: boolean, verdict: string, message?: string} | null>(null);
+  submitResult = signal<SubmissionFeedback | null>(null);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -496,7 +505,7 @@ export class ProblemDetailComponent implements OnInit {
 
   loadProblem(id: number) {
     this.loading.set(true);
-    this.http.get<ProblemDetail>(`http://localhost:8085/api/v1/problems/${id}`).subscribe({
+    this.http.get<ProblemDetail>(`http://localhost:8087/api/v1/problems/${id}`).subscribe({
       next: (data) => {
         this.problem.set(data);
         this.loading.set(false);
@@ -514,21 +523,32 @@ export class ProblemDetailComponent implements OnInit {
       return;
     }
 
+    const currentProblem = this.problem();
+    if (!currentProblem) {
+      this.submitResult.set({
+        accepted: false,
+        verdict: 'Error',
+        message: 'Problem details unavailable. Please reload.'
+      });
+      return;
+    }
+
     this.submitting.set(true);
     this.submitResult.set(null);
 
-    const submission = {
-      problemId: this.problem()!.id,
+    const submission: SubmissionPayload = {
+      problemId: currentProblem.id,
       language: this.selectedLanguage,
-      sourceCode: this.code
+      code: this.code
     };
 
-    this.http.post<any>('http://localhost:8085/api/v1/submissions', submission).subscribe({
-      next: (result) => {
+    this.submissionApi.submit(submission).subscribe({
+      next: (result: SubmissionResponse) => {
         this.submitResult.set({
-          accepted: result.verdict === 'ACCEPTED',
-          verdict: result.verdict || 'Submitted',
-          message: result.message
+          accepted: result.status === 'ACCEPTED',
+          verdict: result.status ?? 'SUBMITTED',
+          message: result.resultMessage ?? 'Submission received. Check My Submissions for live status.',
+          submissionId: result.id
         });
         this.submitting.set(false);
       },

@@ -14,6 +14,7 @@ import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,9 +74,12 @@ public class KafkaConfig {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "judge-service-results-group");
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        configProps.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        configProps.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "com.judgeservice.dto,com.codeexecutor.dto");
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "com.judgeservice.dto.JudgeResult");
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return new DefaultKafkaConsumerFactory<>(configProps);
     }

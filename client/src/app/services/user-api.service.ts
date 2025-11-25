@@ -23,7 +23,7 @@ export interface PageResponse<T> {
   providedIn: 'root'
 })
 export class UserApiService {
-  private readonly API_URL = 'http://localhost:8085/api/v1';
+  private readonly API_URL = 'http://localhost:8087/api/v1';
 
   constructor(private http: HttpClient) {}
 

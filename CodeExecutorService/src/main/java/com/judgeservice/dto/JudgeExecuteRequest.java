@@ -1,4 +1,4 @@
-package com.codeexecutor.dto;
+package com.judgeservice.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

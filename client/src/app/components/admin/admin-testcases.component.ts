@@ -595,7 +595,7 @@ export class AdminTestCasesComponent implements OnInit {
   // Examples Methods
   loadExamples() {
     this.loadingExamples.set(true);
-    this.http.get<Example[]>(`http://localhost:8085/api/v1/problems/${this.problemId()}/examples`)
+    this.http.get<Example[]>(`http://localhost:8087/api/v1/problems/${this.problemId()}/examples`)
       .subscribe({
         next: (data) => {
           this.examples.set(data);
@@ -610,8 +610,8 @@ export class AdminTestCasesComponent implements OnInit {
 
   saveExample() {
     const url = this.editingExampleId()
-      ? `http://localhost:8085/api/v1/problems/${this.problemId()}/examples/${this.editingExampleId()}`
-      : `http://localhost:8085/api/v1/problems/${this.problemId()}/examples`;
+      ? `http://localhost:8087/api/v1/problems/${this.problemId()}/examples/${this.editingExampleId()}`
+      : `http://localhost:8087/api/v1/problems/${this.problemId()}/examples`;
     
     const method = this.editingExampleId() ? 'put' : 'post';
 
@@ -640,7 +640,7 @@ export class AdminTestCasesComponent implements OnInit {
   deleteExample(id: number) {
     if (!confirm('Are you sure you want to delete this example?')) return;
 
-    this.http.delete(`http://localhost:8085/api/v1/problems/${this.problemId()}/examples/${id}`)
+    this.http.delete(`http://localhost:8087/api/v1/problems/${this.problemId()}/examples/${id}`)
       .subscribe({
         next: () => {
           this.exampleMessage.set('Example deleted successfully!');
@@ -672,7 +672,7 @@ export class AdminTestCasesComponent implements OnInit {
   // Test Cases Methods
   loadTestCases() {
     this.loadingTestCases.set(true);
-    this.http.get<TestCase[]>(`http://localhost:8085/api/v1/problems/${this.problemId()}/testcases`)
+    this.http.get<TestCase[]>(`http://localhost:8087/api/v1/problems/${this.problemId()}/testcases`)
       .subscribe({
         next: (data) => {
           this.testCases.set(data);
@@ -687,8 +687,8 @@ export class AdminTestCasesComponent implements OnInit {
 
   saveTestCase() {
     const url = this.editingTestCaseId()
-      ? `http://localhost:8085/api/v1/problems/${this.problemId()}/testcases/${this.editingTestCaseId()}`
-      : `http://localhost:8085/api/v1/problems/${this.problemId()}/testcases`;
+      ? `http://localhost:8087/api/v1/problems/${this.problemId()}/testcases/${this.editingTestCaseId()}`
+      : `http://localhost:8087/api/v1/problems/${this.problemId()}/testcases`;
     
     const method = this.editingTestCaseId() ? 'put' : 'post';
 
@@ -717,7 +717,7 @@ export class AdminTestCasesComponent implements OnInit {
   deleteTestCase(id: number) {
     if (!confirm('Are you sure you want to delete this test case?')) return;
 
-    this.http.delete(`http://localhost:8085/api/v1/problems/${this.problemId()}/testcases/${id}`)
+    this.http.delete(`http://localhost:8087/api/v1/problems/${this.problemId()}/testcases/${id}`)
       .subscribe({
         next: () => {
           this.testCaseMessage.set('Test case deleted successfully!');

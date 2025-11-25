@@ -1,18 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-
-interface Submission {
-  id: number;
-  problemId: number;
-  problemTitle: string;
-  language: string;
-  verdict: string;
-  executionTime?: number;
-  memoryUsed?: number;
-  submittedAt: string;
-}
+import { SubmissionApiService, SubmissionResponse } from '../../services/submission-api.service';
 
 @Component({
   selector: 'app-submissions',
@@ -37,9 +26,8 @@ interface Submission {
                 <th>ID</th>
                 <th>Problem</th>
                 <th>Language</th>
-                <th>Verdict</th>
-                <th>Time</th>
-                <th>Memory</th>
+                <th>Status</th>
+                <th>Result</th>
                 <th>Submitted</th>
                 <th>Actions</th>
               </tr>
@@ -50,25 +38,24 @@ interface Submission {
                   <td>{{ submission.id }}</td>
                   <td>
                     <a (click)="goToProblem(submission.problemId)" class="problem-link">
-                      {{ submission.problemTitle }}
+                      {{ formatProblemTitle(submission) }}
                     </a>
                   </td>
                   <td>{{ submission.language }}</td>
                   <td>
-                    <span class="verdict" [class]="'verdict-' + getVerdictClass(submission.verdict)">
-                      {{ submission.verdict }}
+                    <span class="verdict" [class]="'verdict-' + getVerdictClass(submission.status)">
+                      {{ submission.status }}
                     </span>
                   </td>
-                  <td>{{ submission.executionTime ? submission.executionTime + 'ms' : '-' }}</td>
-                  <td>{{ submission.memoryUsed ? submission.memoryUsed + 'MB' : '-' }}</td>
-                  <td>{{ formatDate(submission.submittedAt) }}</td>
+                  <td>{{ submission.resultMessage || '-' }}</td>
+                  <td>{{ formatDate(submission.createdAt) }}</td>
                   <td>
                     <button (click)="viewCode(submission.id)" class="btn-view">View Code</button>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="empty">No submissions yet. Start solving problems!</td>
+                  <td colspan="7" class="empty">No submissions yet. Start solving problems!</td>
                 </tr>
               }
             </tbody>
@@ -230,10 +217,10 @@ interface Submission {
   `]
 })
 export class SubmissionsComponent implements OnInit {
-  private http = inject(HttpClient);
+  private submissionApi = inject(SubmissionApiService);
   private router = inject(Router);
 
-  submissions = signal<Submission[]>([]);
+  submissions = signal<SubmissionResponse[]>([]);
   loading = signal(false);
   error = signal('');
 
@@ -243,30 +230,33 @@ export class SubmissionsComponent implements OnInit {
 
   loadSubmissions() {
     this.loading.set(true);
-    this.http.get<any>('http://localhost:8085/api/v1/submissions/my').subscribe({
+    this.submissionApi.getMySubmissions().subscribe({
       next: (data) => {
-        const submissionsList = data.content || data || [];
-        this.submissions.set(submissionsList);
+        this.submissions.set(data || []);
         this.loading.set(false);
       },
       error: (err) => {
-        this.error.set(`Failed to load submissions: ${err.statusText}`);
+        this.error.set(`Failed to load submissions: ${err.error?.message || err.statusText || 'Unknown error'}`);
         this.loading.set(false);
       }
     });
   }
 
-  getVerdictClass(verdict: string): string {
-    const v = verdict.toLowerCase();
+  getVerdictClass(status: string): string {
+    const v = (status || '').toLowerCase();
     if (v.includes('accept')) return 'accepted';
-    if (v.includes('wrong') || v.includes('fail')) return 'wrong';
-    if (v.includes('pending') || v.includes('judging')) return 'pending';
+    if (v.includes('queue') || v.includes('pending') || v.includes('run')) return 'pending';
+    if (v.includes('wrong') || v.includes('fail') || v.includes('reject') || v.includes('error')) return 'wrong';
     return 'error';
   }
 
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleString();
+  }
+
+  formatProblemTitle(submission: SubmissionResponse): string {
+    return submission.problemTitle || `Problem #${submission.problemId}`;
   }
 
   goToProblem(problemId: number) {

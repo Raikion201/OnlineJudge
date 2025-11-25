@@ -267,7 +267,7 @@ export class ProblemsComponent implements OnInit {
     this.loading.set(true);
     this.error.set('');
 
-    this.http.get<any>('http://localhost:8085/api/v1/problems').subscribe({
+    this.http.get<any>('http://localhost:8087/api/v1/problems').subscribe({
       next: (data) => {
         console.log('Problems API Response:', data);
         // Extract content array from Page response

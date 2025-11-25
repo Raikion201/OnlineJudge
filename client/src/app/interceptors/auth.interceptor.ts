@@ -10,7 +10,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   console.log('[AuthInterceptor] Token available:', !!token);
   
   // Add token to requests going to API Gateway
-  if (token && req.url.includes('localhost:8085')) {
+  if (token && req.url.includes('localhost:8087')) {
     console.log('[AuthInterceptor] Adding token to request');
     const cloned = req.clone({
       setHeaders: {

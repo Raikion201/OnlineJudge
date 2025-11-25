@@ -14,10 +14,18 @@ spring:
             - Path=/api/v1/problems/**
           filters:
             - StripPrefix=0
+        - id: submission-service
+          uri: lb://SUBMISSION-SERVICE
+          predicates:
+            - Path=/api/v1/submissions/**
+          filters:
+            - StripPrefix=0
       globalcors:
+        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOrigins:
+              - ${ALLOWED_ORIGIN:http://localhost:4200}
             allowedMethods:
               - GET
               - POST
@@ -30,11 +38,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Use JWK Set URI directly to avoid issuer validation issues
-          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://keycloak:8080/realms/online-judge/protocol/openid-connect/certs}
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://${KEYCLOAK_HOST:localhost}:${KEYCLOAK_PORT:8321}/realms/online-judge}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://${KEYCLOAK_HOST:localhost}:${KEYCLOAK_PORT:8321}/realms/online-judge/protocol/openid-connect/certs}
 
 server:
-  port: ${SERVER_PORT:8085}
+  port: ${SERVER_PORT:8087}
 
 eureka:
   client:

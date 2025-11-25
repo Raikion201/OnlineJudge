@@ -363,7 +363,7 @@ export class AdminProblemsComponent implements OnInit {
 
   loadProblems() {
     this.loading.set(true);
-    this.http.get<any>('http://localhost:8085/api/v1/problems').subscribe({
+    this.http.get<any>('http://localhost:8087/api/v1/problems').subscribe({
       next: (data) => {
         console.log('API Response:', data);
         // Extract content array from Page response
@@ -394,7 +394,7 @@ export class AdminProblemsComponent implements OnInit {
 
     if (this.editingId()) {
       // Update
-      this.http.put(`http://localhost:8085/api/v1/problems/${this.editingId()}`, problem).subscribe({
+      this.http.put(`http://localhost:8087/api/v1/problems/${this.editingId()}`, problem).subscribe({
         next: () => {
           this.showMessage('Problem updated successfully!', false);
           this.loadProblems();
@@ -407,7 +407,7 @@ export class AdminProblemsComponent implements OnInit {
       });
     } else {
       // Create
-      this.http.post('http://localhost:8085/api/v1/problems', problem).subscribe({
+      this.http.post('http://localhost:8087/api/v1/problems', problem).subscribe({
         next: () => {
           this.showMessage('Problem created successfully!', false);
           this.loadProblems();
@@ -431,7 +431,7 @@ export class AdminProblemsComponent implements OnInit {
   deleteProblem(id: number) {
     if (!confirm('Are you sure you want to delete this problem?')) return;
 
-    this.http.delete(`http://localhost:8085/api/v1/problems/${id}`).subscribe({
+    this.http.delete(`http://localhost:8087/api/v1/problems/${id}`).subscribe({
       next: () => {
         this.showMessage('Problem deleted successfully!', false);
         this.loadProblems();

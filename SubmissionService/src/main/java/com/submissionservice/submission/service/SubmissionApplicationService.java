@@ -1,7 +1,6 @@
 package com.submissionservice.submission.service;
 
 import com.submissionservice.submission.client.ProblemClient;
-import com.submissionservice.submission.client.UserClient;
 import com.submissionservice.submission.dto.SubmissionRequest;
 import com.submissionservice.submission.dto.SubmissionResponse;
 import com.submissionservice.submission.dto.SubmissionStatusUpdateRequest;
@@ -17,6 +16,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,16 +31,13 @@ public class SubmissionApplicationService {
     private final SubmissionRepository submissionRepository;
     private final KafkaTemplate<String, Long> kafkaTemplate;
     private final ProblemClient problemClient;
-    private final UserClient userClient;
 
-    public SubmissionApplicationService(SubmissionRepository submissionRepository, 
+    public SubmissionApplicationService(SubmissionRepository submissionRepository,
                                         KafkaTemplate<String, Long> kafkaTemplate,
-                                        ProblemClient problemClient,
-                                        UserClient userClient) {
+                                        ProblemClient problemClient) {
         this.submissionRepository = submissionRepository;
         this.kafkaTemplate = kafkaTemplate;
         this.problemClient = problemClient;
-        this.userClient = userClient;
     }
 
     @Transactional
@@ -56,17 +54,6 @@ public class SubmissionApplicationService {
             throw new BadRequestException("Failed to validate problem: " + ex.getMessage());
         }
 
-        // Validate user exists
-        try {
-            userClient.getUserByKeycloakId(userId);
-            log.debug("User {} validated", userId);
-        } catch (FeignException.NotFound ex) {
-            log.warn("User {} not found", userId);
-            throw new BadRequestException("User not found with keycloakId: " + userId);
-        } catch (FeignException ex) {
-            log.error("Error validating user {}: {}", userId, ex.getMessage());
-            throw new BadRequestException("Failed to validate user: " + ex.getMessage());
-        }
 
         Submission submission = new Submission();
         submission.setProblemId(request.problemId());
@@ -77,23 +64,7 @@ public class SubmissionApplicationService {
 
         Submission saved = submissionRepository.save(submission);
 
-        // Publish submission_id to submission.jobs Kafka topic
-        try {
-            CompletableFuture<SendResult<String, Long>> future = kafkaTemplate.send(SUBMISSION_JOBS_TOPIC, saved.getId());
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.info("Successfully published submission {} to topic {}", 
-                            saved.getId(), SUBMISSION_JOBS_TOPIC);
-                } else {
-                    log.error("Failed to publish submission {} to topic {}", 
-                            saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
-                }
-            });
-        } catch (Exception ex) {
-            log.error("Error publishing submission {} to Kafka topic {}", 
-                    saved.getId(), SUBMISSION_JOBS_TOPIC, ex);
-            // Note: We don't change status here as per requirements - status remains PENDING
-        }
+        registerKafkaPublishAfterCommit(saved.getId());
 
         return toResponse(saved);
     }
@@ -141,6 +112,38 @@ public class SubmissionApplicationService {
                 submission.getCreatedAt(),
                 submission.getUpdatedAt()
         );
+    }
+
+    private void registerKafkaPublishAfterCommit(Long submissionId) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    publishSubmissionJob(submissionId);
+                }
+            });
+        } else {
+            publishSubmissionJob(submissionId);
+        }
+    }
+
+    private void publishSubmissionJob(Long submissionId) {
+        try {
+            CompletableFuture<SendResult<String, Long>> future =
+                    kafkaTemplate.send(SUBMISSION_JOBS_TOPIC, submissionId);
+            future.whenComplete((result, ex) -> {
+                if (ex == null) {
+                    log.info("Successfully published submission {} to topic {}",
+                            submissionId, SUBMISSION_JOBS_TOPIC);
+                } else {
+                    log.error("Failed to publish submission {} to topic {}",
+                            submissionId, SUBMISSION_JOBS_TOPIC, ex);
+                }
+            });
+        } catch (Exception ex) {
+            log.error("Error publishing submission {} to Kafka topic {}",
+                    submissionId, SUBMISSION_JOBS_TOPIC, ex);
+        }
     }
 }
 
