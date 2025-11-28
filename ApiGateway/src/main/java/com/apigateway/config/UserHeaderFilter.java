@@ -16,6 +16,7 @@ public class UserHeaderFilter implements GlobalFilter, Ordered {
 
     private static final Logger log = LoggerFactory.getLogger(UserHeaderFilter.class);
     private static final String USER_HEADER = "X-User-Id";
+    private static final String USER_NAME_HEADER = "X-User-Name";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -24,19 +25,27 @@ public class UserHeaderFilter implements GlobalFilter, Ordered {
                 .cast(JwtAuthenticationToken.class)
                 .flatMap(jwtAuth -> {
                     String keycloakId = jwtAuth.getToken().getSubject();
-                    String headerValue = keycloakId != null ? keycloakId
-                            : jwtAuth.getToken().getClaimAsString("preferred_username");
+                    String username = jwtAuth.getToken().getClaimAsString("preferred_username");
+                    
+                    if (keycloakId == null && username != null) {
+                        keycloakId = username;
+                    }
+                    
+                    // Extract roles if needed, but usually handled by SecurityContext in downstream services if token is forwarded
+                    
+                    if (keycloakId != null) {
+                        log.info("Injecting headers: Id={}, Name={}", keycloakId, username);
+                        ServerHttpRequest.Builder builder = exchange.getRequest().mutate()
+                                .header(USER_HEADER, keycloakId);
+                        
+                        if (username != null) {
+                            builder.header(USER_NAME_HEADER, username);
+                        }
 
-                    if (headerValue != null) {
-                        log.debug("Injecting {} header with value {}", USER_HEADER, headerValue);
-                        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                                .headers(headers -> headers.set(USER_HEADER, headerValue))
-                                .build();
-
-                        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                        return chain.filter(exchange.mutate().request(builder.build()).build());
                     }
 
-                    log.debug("No user identifier found in JWT, proceeding without header injection");
+                    log.info("No user identifier found in JWT, proceeding without header injection");
                     return chain.filter(exchange);
                 })
                 .switchIfEmpty(chain.filter(exchange));

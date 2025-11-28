@@ -45,6 +45,8 @@ public class SecurityConfig {
             .authorizeExchange(exchanges -> exchanges
                 // Allow CORS preflight requests
                 .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                // Allow comments
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems/*/comments").permitAll()
                 // Public endpoints
                 .pathMatchers("/api/v1/users/register", "/api/v1/users/login").permitAll()
                 .pathMatchers("/api/v1/submissions/leaderboard/**").permitAll()
@@ -65,10 +67,13 @@ public class SecurityConfig {
                 .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems/*/testcases", "/api/v1/problems/*/testcases/*").authenticated()
                 
                 // Public GET for problems (anyone can view) - AFTER more specific rules
-                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems", "/api/v1/problems/*").permitAll()
+                .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/problems/**").permitAll()
                 .pathMatchers(org.springframework.http.HttpMethod.GET, "/api/v1/tags", "/api/v1/tags/**").permitAll()
                 
                 // Protected endpoints with roles (POST, PUT, DELETE require auth)
+                .pathMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/problems/*/comments").authenticated()
+                .pathMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/problems/*/comments/*").authenticated()
+                
                 .pathMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/problems").hasRole("Admin")
                 .pathMatchers(org.springframework.http.HttpMethod.PUT, "/api/v1/problems/*").hasRole("Admin")
                 .pathMatchers(org.springframework.http.HttpMethod.DELETE, "/api/v1/problems/*").hasRole("Admin")

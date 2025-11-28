@@ -30,6 +30,18 @@ interface SubmissionFeedback {
   submissionId?: number;
 }
 
+interface Comment {
+  id: number;
+  problemId: number;
+  userId: string;
+  username: string;
+  content: string;
+  parentId?: number;
+  replies?: Comment[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
 @Component({
   selector: 'app-problem-detail',
   standalone: true,
@@ -59,6 +71,12 @@ interface SubmissionFeedback {
                 [class.active]="activeTab() === 'leaderboard'"
                 (click)="switchTab('leaderboard')">
                 Submission Results
+              </button>
+              <button 
+                class="tab-btn" 
+                [class.active]="activeTab() === 'discussion'"
+                (click)="switchTab('discussion')">
+                Discussion
               </button>
             </div>
 
@@ -166,6 +184,102 @@ interface SubmissionFeedback {
                     </tbody>
                   </table>
                 }
+              </div>
+            } @else if (activeTab() === 'discussion') {
+              <div class="discussion-container">
+                <!-- Discussion Rules -->
+                <div class="discussion-rules">
+                  <h4>Discussion Rules</h4>
+                  <ul>
+                    <li>Be respectful and constructive. No personal attacks or trolling.</li>
+                    <li>Do not post solutions in the discussion. Use the "Solution" tab instead.</li>
+                    <li>Keep discussions focused on the problem. Ask clarifying questions, discuss edge cases, or share alternative approaches.</li>
+                    <li>Use code formatting for any small snippets of code you share.</li>
+                  </ul>
+                </div>
+
+                <!-- Post Comment Section -->
+                <div class="post-comment-section">
+                  <h4>Post a Comment</h4>
+                  <div class="comment-input-wrapper">
+                    <textarea 
+                      [(ngModel)]="newCommentContent" 
+                      placeholder="Type your comment here..."
+                      class="comment-editor"
+                      spellcheck="false"
+                    ></textarea>
+                  </div>
+                  <div class="post-actions">
+                    <button (click)="postComment()" class="btn-post-comment">
+                      Post Comment
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Comments List -->
+                <div class="comments-list">
+                  @if (loadingComments()) {
+                    <div class="loading-sm">Loading comments...</div>
+                  } @else if (comments().length === 0) {
+                    <div class="empty-state">No comments yet. Be the first to discuss!</div>
+                  } @else {
+                    @for (comment of comments(); track comment.id) {
+                      <div class="comment-item">
+                        <div class="avatar">
+                          <img [src]="getAvatarUrl(comment.username)" alt="User Avatar">
+                        </div>
+                        <div class="comment-body">
+                          <div class="comment-header">
+                            <span class="username">{{ comment.username }}</span>
+                            <span class="time-ago">{{ formatDate(comment.createdAt) }}</span>
+                            <button (click)="startReply(comment.id)" class="btn-reply-link">Reply</button>
+                          </div>
+                          <div class="comment-text">
+                            {{ comment.content }}
+                          </div>
+                          
+                          <!-- Reply Input -->
+                          @if (replyingToId() === comment.id) {
+                            <div class="reply-input-box">
+                               <textarea 
+                                  [(ngModel)]="replyContent" 
+                                  placeholder="Write a reply..."
+                                  class="reply-editor"
+                                  spellcheck="false"
+                                ></textarea>
+                                <div class="reply-actions">
+                                  <button (click)="cancelReply()" class="btn-cancel">Cancel</button>
+                                  <button (click)="submitReply(comment.id)" class="btn-submit">Post Reply</button>
+                                </div>
+                            </div>
+                          }
+
+                          <!-- Nested Replies -->
+                          @if (comment.replies && comment.replies.length > 0) {
+                            <div class="replies-list">
+                               @for (reply of comment.replies; track reply.id) {
+                                  <div class="reply-item">
+                                    <div class="avatar sm">
+                                      <img [src]="getAvatarUrl(reply.username)" alt="User Avatar">
+                                    </div>
+                                    <div class="reply-body">
+                                       <div class="reply-header">
+                                          <span class="username">{{ reply.username }}</span>
+                                          <span class="time-ago">{{ formatDate(reply.createdAt) }}</span>
+                                       </div>
+                                       <div class="reply-text">
+                                          {{ reply.content }}
+                                       </div>
+                                    </div>
+                                  </div>
+                               }
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
               </div>
             }
           </div>
@@ -593,14 +707,391 @@ interface SubmissionFeedback {
       font-style: italic;
     }
 
-    @media (max-width: 1200px) {
-      .problem-layout {
-        grid-template-columns: 1fr;
-      }
+    .discussion-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px 0;
+    }
 
-      .problem-panel, .code-panel {
-        max-height: none;
-      }
+    .discussion-rules {
+      background-color: #e6f7ff;
+      border: 1px solid #91d5ff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .discussion-rules h4 {
+      color: #0050b3;
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .discussion-rules ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #003a8c;
+    }
+
+    .discussion-rules li {
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .post-comment-section {
+      background: #fff;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .post-comment-section h4 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .comment-editor {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      resize: vertical;
+      font-family: inherit;
+      margin-bottom: 12px;
+      transition: border-color 0.3s;
+    }
+
+    .comment-editor:focus {
+      border-color: #1890ff;
+      outline: none;
+    }
+
+    .post-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-post-comment {
+      background: #1890ff;
+      color: white;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+    }
+
+    .btn-post-comment:hover {
+      background: #40a9ff;
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .comment-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #eee;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .avatar.sm {
+        width: 32px;
+        height: 32px;
+    }
+
+    .comment-body {
+      flex: 1;
+    }
+
+    .comment-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .username {
+      font-weight: 600;
+      color: #262626;
+    }
+
+    .time-ago {
+      color: #8c8c8c;
+      font-size: 12px;
+    }
+
+    .btn-reply-link {
+      background: none;
+      border: none;
+      color: #8c8c8c;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 0;
+      margin-left: auto;
+    }
+
+    .btn-reply-link:hover {
+      color: #1890ff;
+      text-decoration: underline;
+    }
+
+    .comment-text {
+      color: #595959;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .replies-list {
+      margin-top: 16px;
+      padding-left: 16px;
+      border-left: 2px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .reply-item {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .reply-body {
+        flex: 1;
+    }
+    
+    .reply-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+    
+    .reply-text {
+        color: #595959;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .reply-input-box {
+        margin-top: 12px;
+        background: #fafafa;
+        padding: 12px;
+        border-radius: 6px;
+    }
+    
+    .reply-editor {
+        width: 100%;
+        min-height: 60px;
+        padding: 8px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        resize: vertical;
+    }
+    
+    .reply-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+    
+    .btn-cancel {
+        background: white;
+        border: 1px solid #d9d9d9;
+        color: #595959;
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    .btn-submit {
+        background: #1890ff;
+        color: white;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .discussion-section {
+      padding: 20px 0;
+    }
+
+    .discussion-rules {
+      background: #e6f7ff;
+      border: 1px solid #91d5ff;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+
+    .discussion-rules h3 {
+      margin: 0 0 10px 0;
+      color: #0050b3;
+      font-size: 16px;
+    }
+
+    .discussion-rules ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #003a8c;
+      font-size: 14px;
+    }
+
+    .discussion-rules li {
+      margin-bottom: 5px;
+    }
+
+    .post-comment {
+      margin-bottom: 30px;
+    }
+
+    .post-comment textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .post-actions {
+      text-align: right;
+    }
+
+    .comment-thread {
+      margin-bottom: 20px;
+    }
+
+    .comment {
+      display: flex;
+      gap: 15px;
+    }
+
+    .comment-avatar img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+
+    .comment-content {
+      flex: 1;
+    }
+
+    .comment-header {
+      margin-bottom: 5px;
+    }
+
+    .username {
+      font-weight: 600;
+      margin-right: 10px;
+      color: #262626;
+    }
+
+    .time {
+      color: #8c8c8c;
+      font-size: 12px;
+    }
+
+    .comment-body {
+      color: #595959;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .comment-actions {
+      margin-bottom: 10px;
+    }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: #1890ff;
+      cursor: pointer;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .btn-link:hover {
+      text-decoration: underline;
+    }
+
+    .replies {
+      margin-left: 55px;
+      margin-top: 15px;
+      border-left: 2px solid #f0f0f0;
+      padding-left: 15px;
+    }
+
+    .reply {
+      margin-bottom: 15px;
+    }
+
+    .reply-form {
+      margin-top: 10px;
+      background: #fafafa;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .reply-form textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .reply-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: #1890ff;
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #595959;
     }
   `]
 })
@@ -619,9 +1110,16 @@ export class ProblemDetailComponent implements OnInit {
   submitting = signal(false);
   running = signal(false);
   submitResult = signal<SubmissionFeedback | null>(null);
-  activeTab = signal<'description' | 'leaderboard'>('description');
+  activeTab = signal<'description' | 'leaderboard' | 'discussion'>('description');
   leaderboard = signal<LeaderboardEntry[]>([]);
   loadingLeaderboard = signal(false);
+  
+  // Discussion
+  comments = signal<Comment[]>([]);
+  loadingComments = signal(false);
+  newCommentContent = signal('');
+  replyingToId = signal<number | null>(null);
+  replyContent = signal('');
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -718,16 +1216,80 @@ export class ProblemDetailComponent implements OnInit {
     this.router.navigate(['/problems']);
   }
 
-  switchTab(tab: 'description' | 'leaderboard') {
+  switchTab(tab: 'description' | 'leaderboard' | 'discussion') {
     this.activeTab.set(tab);
-    if (tab === 'leaderboard' && this.leaderboard().length === 0) {
-      this.fetchLeaderboard();
+    if (tab === 'leaderboard') {
+      this.loadLeaderboard();
+    } else if (tab === 'discussion') {
+      this.loadComments();
     }
   }
 
-  fetchLeaderboard() {
+  loadComments() {
     if (!this.problem()) return;
+    this.loadingComments.set(true);
+    this.http.get<any>(`http://localhost:8087/api/v1/problems/${this.problem()!.id}/comments`)
+      .subscribe({
+        next: (data) => {
+          this.comments.set(data.content || []);
+          this.loadingComments.set(false);
+        },
+        error: (err) => {
+          console.error('Failed to load comments', err);
+          this.loadingComments.set(false);
+        }
+      });
+  }
+
+  postComment() {
+    if (!this.newCommentContent().trim()) return;
     
+    const payload = {
+      content: this.newCommentContent()
+    };
+
+    this.http.post<Comment>(`http://localhost:8087/api/v1/problems/${this.problem()!.id}/comments`, payload)
+      .subscribe({
+        next: (comment) => {
+          this.comments.update(prev => [comment, ...prev]);
+          this.newCommentContent.set('');
+        },
+        error: (err) => alert('Failed to post comment')
+      });
+  }
+
+  startReply(commentId: number) {
+    this.replyingToId.set(commentId);
+    this.replyContent.set('');
+  }
+
+  cancelReply() {
+    this.replyingToId.set(null);
+    this.replyContent.set('');
+  }
+
+  submitReply(parentId: number) {
+    if (!this.replyContent().trim()) return;
+
+    const payload = {
+      content: this.replyContent(),
+      parentId: parentId
+    };
+
+    this.http.post<Comment>(`http://localhost:8087/api/v1/problems/${this.problem()!.id}/comments`, payload)
+      .subscribe({
+        next: (reply) => {
+          // Optimistically update UI or reload
+          // For simplicity, reloading or finding parent and pushing
+          this.loadComments(); 
+          this.cancelReply();
+        },
+        error: (err) => alert('Failed to post reply')
+      });
+  }
+
+  loadLeaderboard() {
+    if (!this.problem()) return;
     this.loadingLeaderboard.set(true);
     this.submissionApi.getLeaderboard(this.problem()!.id).subscribe({
       next: (data) => {
@@ -735,9 +1297,28 @@ export class ProblemDetailComponent implements OnInit {
         this.loadingLeaderboard.set(false);
       },
       error: (err) => {
-        console.error('Failed to fetch leaderboard', err);
+        console.error('Failed to load leaderboard', err);
         this.loadingLeaderboard.set(false);
       }
     });
+  }
+
+  formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
+  }
+
+  getAvatarUrl(username: string): string {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random&color=fff&size=128`;
   }
 }
