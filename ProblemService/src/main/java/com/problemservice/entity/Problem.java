@@ -4,17 +4,17 @@ import com.problemservice.enums.Difficulty;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "problems")
+@Table(name = "problems", indexes = {
+    @Index(name = "idx_is_public", columnList = "is_public"),
+    @Index(name = "idx_created_by", columnList = "created_by"),
+    @Index(name = "idx_public_created_at", columnList = "is_public,created_at")
+})
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
