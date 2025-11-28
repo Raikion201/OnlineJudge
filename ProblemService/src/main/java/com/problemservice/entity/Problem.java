@@ -11,9 +11,14 @@ import java.util.Set;
 
 @Entity
 @Table(name = "problems", indexes = {
-    @Index(name = "idx_is_public", columnList = "is_public"),
-    @Index(name = "idx_created_by", columnList = "created_by"),
-    @Index(name = "idx_public_created_at", columnList = "is_public,created_at")
+    // list problem by difficulty and is_public
+    @Index(name = "idx_is_public_difficulty", columnList = "is_public,difficulty"),
+    // list problem by is_public and created_at sorted descending
+    @Index(name = "idx_public_created_at", columnList = "is_public, created_at DESC"),
+    // list problem by is_public and created_at
+    @Index(name = "idx_public_created_at", columnList = "is_public,created_at"),
+    // list problem by title
+    @Index(name = "idx_title", columnList = "title")
 })
 @NoArgsConstructor
 @AllArgsConstructor
