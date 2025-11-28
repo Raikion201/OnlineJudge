@@ -29,18 +29,8 @@ interface TestCase {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
-      <nav class="navbar">
-        <div class="nav-container">
-          <div class="logo">
-            <h1>OnlineJudge Admin</h1>
-          </div>
-          <div class="nav-links">
-            <button (click)="goToProblems()" class="nav-btn">Back to Problems</button>
-          </div>
-        </div>
-      </nav>
-
       <div class="content">
+        <button (click)="goToProblems()" class="btn-back">← Back to Problems</button>
         <h1 class="page-title">Test Cases & Examples - Problem #{{ problemId() }}</h1>
 
         <!-- Examples Section -->
@@ -239,43 +229,22 @@ interface TestCase {
       background: #ffffff;
     }
 
-    .navbar {
-      background: #000000;
-      padding: 1rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .nav-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-
-    .logo h1 {
-      color: white;
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .nav-btn {
+    .btn-back {
       background: transparent;
-      border: 2px solid white;
-      color: white;
+      border: 2px solid #000;
+      color: #000;
       padding: 0.5rem 1rem;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
       border-radius: 6px;
       transition: all 0.2s;
+      margin-bottom: 1rem;
     }
 
-    .nav-btn:hover {
-      background: white;
-      color: #000;
+    .btn-back:hover {
+      background: #000;
+      color: white;
     }
 
     .content {
@@ -601,8 +570,8 @@ export class AdminTestCasesComponent implements OnInit {
           this.examples.set(data);
           this.loadingExamples.set(false);
         },
-        error: (error) => {
-          console.error('Load examples error:', error);
+        error: (err) => {
+          console.error('Error loading examples:', err);
           this.loadingExamples.set(false);
         }
       });
@@ -615,20 +584,19 @@ export class AdminTestCasesComponent implements OnInit {
     
     const method = this.editingExampleId() ? 'put' : 'post';
 
-    this.http.request(method, url, { body: this.exampleForm })
-      .subscribe({
-        next: () => {
-          this.exampleMessage.set(`Example ${this.editingExampleId() ? 'updated' : 'added'} successfully!`);
-          this.isExampleError.set(false);
-          this.resetExampleForm();
-          this.loadExamples();
-          setTimeout(() => this.exampleMessage.set(''), 3000);
-        },
-        error: (error) => {
-          this.exampleMessage.set('Error: ' + (error.error?.message || error.message));
-          this.isExampleError.set(true);
-        }
-      });
+    this.http.request(method, url, { body: this.exampleForm }).subscribe({
+      next: () => {
+        this.exampleMessage.set(`Example ${this.editingExampleId() ? 'updated' : 'added'} successfully`);
+        this.isExampleError.set(false);
+        this.loadExamples();
+        this.resetExampleForm();
+      },
+      error: (err) => {
+        this.exampleMessage.set('Failed to save example');
+        this.isExampleError.set(true);
+        console.error(err);
+      }
+    });
   }
 
   editExample(example: Example) {
@@ -638,20 +606,14 @@ export class AdminTestCasesComponent implements OnInit {
   }
 
   deleteExample(id: number) {
-    if (!confirm('Are you sure you want to delete this example?')) return;
-
+    if (!confirm('Are you sure?')) return;
+    
     this.http.delete(`http://localhost:8087/api/v1/problems/${this.problemId()}/examples/${id}`)
       .subscribe({
         next: () => {
-          this.exampleMessage.set('Example deleted successfully!');
-          this.isExampleError.set(false);
           this.loadExamples();
-          setTimeout(() => this.exampleMessage.set(''), 3000);
         },
-        error: (error) => {
-          this.exampleMessage.set('Error deleting example: ' + (error.error?.message || error.message));
-          this.isExampleError.set(true);
-        }
+        error: (err) => console.error(err)
       });
   }
 
@@ -678,8 +640,8 @@ export class AdminTestCasesComponent implements OnInit {
           this.testCases.set(data);
           this.loadingTestCases.set(false);
         },
-        error: (error) => {
-          console.error('Load test cases error:', error);
+        error: (err) => {
+          console.error('Error loading test cases:', err);
           this.loadingTestCases.set(false);
         }
       });
@@ -692,20 +654,19 @@ export class AdminTestCasesComponent implements OnInit {
     
     const method = this.editingTestCaseId() ? 'put' : 'post';
 
-    this.http.request(method, url, { body: this.testCaseForm })
-      .subscribe({
-        next: () => {
-          this.testCaseMessage.set(`Test case ${this.editingTestCaseId() ? 'updated' : 'added'} successfully!`);
-          this.isTestCaseError.set(false);
-          this.resetTestCaseForm();
-          this.loadTestCases();
-          setTimeout(() => this.testCaseMessage.set(''), 3000);
-        },
-        error: (error) => {
-          this.testCaseMessage.set('Error: ' + (error.error?.message || error.message));
-          this.isTestCaseError.set(true);
-        }
-      });
+    this.http.request(method, url, { body: this.testCaseForm }).subscribe({
+      next: () => {
+        this.testCaseMessage.set(`Test case ${this.editingTestCaseId() ? 'updated' : 'added'} successfully`);
+        this.isTestCaseError.set(false);
+        this.loadTestCases();
+        this.resetTestCaseForm();
+      },
+      error: (err) => {
+        this.testCaseMessage.set('Failed to save test case');
+        this.isTestCaseError.set(true);
+        console.error(err);
+      }
+    });
   }
 
   editTestCase(testCase: TestCase) {
@@ -715,20 +676,14 @@ export class AdminTestCasesComponent implements OnInit {
   }
 
   deleteTestCase(id: number) {
-    if (!confirm('Are you sure you want to delete this test case?')) return;
-
+    if (!confirm('Are you sure?')) return;
+    
     this.http.delete(`http://localhost:8087/api/v1/problems/${this.problemId()}/testcases/${id}`)
       .subscribe({
         next: () => {
-          this.testCaseMessage.set('Test case deleted successfully!');
-          this.isTestCaseError.set(false);
           this.loadTestCases();
-          setTimeout(() => this.testCaseMessage.set(''), 3000);
         },
-        error: (error) => {
-          this.testCaseMessage.set('Error deleting test case: ' + (error.error?.message || error.message));
-          this.isTestCaseError.set(true);
-        }
+        error: (err) => console.error(err)
       });
   }
 

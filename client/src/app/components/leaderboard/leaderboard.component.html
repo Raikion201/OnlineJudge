@@ -1,0 +1,44 @@
+<div class="content">
+    <div class="header-section">
+      <h1>Leaderboard</h1>
+      <p>See who's on top of the game</p>
+    </div>
+
+    <div class="leaderboard-card">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th class="rank-col">RANK</th>
+              <th class="user-col">USER</th>
+              <th class="score-col">TOTAL SCORE</th>
+              <th class="solved-col">PROBLEMS SOLVED</th>
+              <th class="rate-col">ACCEPTANCE RATE</th>
+              <th class="time-col">LAST SUBMISSION</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="loading()" class="loading-row">
+              <td colspan="6">Loading leaderboard...</td>
+            </tr>
+            
+            <tr *ngFor="let entry of leaderboard()" class="data-row">
+              <td class="rank-col">#{{ entry.rank }}</td>
+              <td class="user-col">
+                <div class="user-info">
+                  <div class="avatar">
+                    {{ entry.username.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="username">{{ entry.username }}</span>
+                </div>
+              </td>
+              <td class="score-col">{{ entry.totalScore | number:'1.0-1' }}</td>
+              <td class="solved-col">{{ entry.totalAccepted }}</td>
+              <td class="rate-col">{{ entry.acceptanceRate | number:'1.1-1' }}%</td>
+              <td class="time-col">{{ entry.lastSubmission | date:'medium' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>

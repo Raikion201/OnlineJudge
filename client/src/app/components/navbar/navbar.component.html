@@ -1,0 +1,23 @@
+<nav class="navbar">
+  <div class="container">
+    <a routerLink="/" class="brand">
+      <div class="logo-icon"></div>
+      CodeJudge
+    </a>
+    <div class="nav-links">
+      <a routerLink="/problems" routerLinkActive="active">Problems</a>
+      <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
+      <a routerLink="/submissions" routerLinkActive="active">Submissions</a>
+      <a href="#">Docs</a>
+    </div>
+    <div class="auth-buttons">
+      @if (isAuthenticated()) {
+        <span class="username">Hi, {{ userProfile()?.username }}</span>
+        <button (click)="logout()" class="btn-text">Logout</button>
+      } @else {
+        <button (click)="login()" class="btn-text">Sign In</button>
+        <button (click)="login()" class="btn-primary">Sign Up</button>
+      }
+    </div>
+  </div>
+</nav>

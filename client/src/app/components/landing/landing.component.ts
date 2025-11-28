@@ -9,23 +9,6 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule],
   template: `
     <div class="landing">
-      <nav class="navbar">
-        <div class="container">
-          <div class="logo">
-            <h1>OnlineJudge</h1>
-          </div>
-          <div class="nav-links">
-            <button (click)="goToProblems()" class="nav-btn">Problems</button>
-            @if (isAuthenticated()) {
-              <button (click)="goToHome()" class="nav-btn">Dashboard</button>
-            } @else {
-              <button (click)="login()" class="btn-primary">Login</button>
-              <button (click)="register()" class="btn-secondary">Sign Up</button>
-            }
-          </div>
-        </div>
-      </nav>
-
       <section class="hero">
         <div class="container">
           <h1 class="hero-title">Master Your Coding Skills</h1>
@@ -103,54 +86,6 @@ import { AuthService } from '../../services/auth.service';
     .landing {
       min-height: 100vh;
       background: #ffffff;
-    }
-
-    .navbar {
-      background: #000000;
-      padding: 1rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .navbar .container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-
-    .logo h1 {
-      color: white;
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: 2px solid white;
-      color: white;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
-    .nav-btn:hover {
-      background: white;
-      color: #000;
     }
 
     .hero {

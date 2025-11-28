@@ -59,7 +59,7 @@ public class JudgeCoordinatorService {
 
             if (problem.getTestCases() == null || problem.getTestCases().isEmpty()) {
                 log.warn("Problem {} has no test cases", problem.getId());
-                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test cases found for problem");
+                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test cases found for problem", null, null, null);
                 return;
             }
 
@@ -71,7 +71,7 @@ public class JudgeCoordinatorService {
 
             if (hiddenTestCases.isEmpty()) {
                 log.warn("Problem {} has no hidden test cases", problem.getId());
-                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No hidden test cases found for problem");
+                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No hidden test cases found for problem", null, null, null);
                 return;
             }
 
@@ -84,7 +84,7 @@ public class JudgeCoordinatorService {
             submissionResults.put(submissionId, new ArrayList<>());
 
             // 4. Update submission status to RUNNING
-            updateSubmissionStatus(submissionId, "RUNNING", "Processing test cases");
+            updateSubmissionStatus(submissionId, "RUNNING", "Processing test cases", null, null, null);
 
             // 5. Publish jobs to judge.execute topic for each test case
             int timeLimit = problem.getTimeLimit();
@@ -115,13 +115,13 @@ public class JudgeCoordinatorService {
 
         } catch (FeignException.NotFound ex) {
             log.error("Submission {} or problem not found", submissionId, ex);
-            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Submission or problem not found");
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Submission or problem not found", null, null, null);
         } catch (FeignException ex) {
             log.error("Error fetching submission {} or problem details", submissionId, ex);
-            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Failed to fetch submission or problem details");
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Failed to fetch submission or problem details", null, null, null);
         } catch (Exception ex) {
             log.error("Unexpected error processing submission {}", submissionId, ex);
-            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Unexpected error: " + ex.getMessage());
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Unexpected error: " + ex.getMessage(), null, null, null);
         }
     }
 
@@ -155,16 +155,33 @@ public class JudgeCoordinatorService {
         List<JudgeResult> results = submissionResults.get(submissionId);
         if (results == null || results.isEmpty()) {
             log.warn("No results found for submission {}", submissionId);
-            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test case results found");
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test case results found", null, null, null);
             return;
         }
 
         // Check results in order of priority
         String finalVerdict = "ACCEPTED";
         String resultMessage = null;
+        int passedCount = 0;
+        int totalCount = results.size();
+        long maxExecutionTime = 0L;
+        long maxMemoryUsage = 0L;
 
         for (JudgeResult result : results) {
             String verdict = result.getVerdict();
+            
+            // Track passed test cases
+            if ("ACCEPTED".equals(verdict)) {
+                passedCount++;
+            }
+            
+            // Track max execution time and memory
+            if (result.getExecutionTime() != null) {
+                maxExecutionTime = Math.max(maxExecutionTime, result.getExecutionTime());
+            }
+            if (result.getMemoryUsed() != null) {
+                maxMemoryUsage = Math.max(maxMemoryUsage, result.getMemoryUsed());
+            }
             
             // Priority order: SYSTEM_ERROR > COMPILATION_ERROR > RUNTIME_ERROR > 
             // TIME_LIMIT_EXCEEDED > MEMORY_LIMIT_EXCEEDED > WRONG_ANSWER > ACCEPTED
@@ -199,23 +216,31 @@ public class JudgeCoordinatorService {
             }
         }
 
-        // Update submission with final verdict
-        updateSubmissionStatus(submissionId, finalVerdict, resultMessage);
+        // Calculate score (percentage of passed test cases * 100)
+        Double score = totalCount > 0 ? (double) passedCount / totalCount * 100.0 : 0.0;
+        
+        // Update submission with final verdict, score, and metrics
+        updateSubmissionStatus(submissionId, finalVerdict, resultMessage, score, maxExecutionTime, maxMemoryUsage);
 
         // Clean up tracking data
         pendingTestCases.remove(submissionId);
         submissionResults.remove(submissionId);
 
-        log.info("Final verdict for submission {}: {}", submissionId, finalVerdict);
+        log.info("Final verdict for submission {}: {} (Score: {}/100, Time: {}ms, Memory: {}KB)", 
+                submissionId, finalVerdict, score, maxExecutionTime, maxMemoryUsage);
     }
 
-    private void updateSubmissionStatus(Long submissionId, String status, String resultMessage) {
+    private void updateSubmissionStatus(Long submissionId, String status, String resultMessage, 
+                                       Double score, Long executionTime, Long memoryUsage) {
         try {
             SubmissionStatusUpdateRequest request = new SubmissionStatusUpdateRequest();
             request.setStatus(status);
             request.setResultMessage(resultMessage);
+            request.setScore(score);
+            request.setExecutionTime(executionTime);
+            request.setMemoryUsage(memoryUsage);
             submissionClient.updateSubmissionStatus(submissionId, request);
-            log.debug("Updated submission {} status to {}", submissionId, status);
+            log.debug("Updated submission {} status to {} with score {}", submissionId, status, score);
         } catch (Exception ex) {
             log.error("Failed to update submission {} status to {}", submissionId, status, ex);
         }

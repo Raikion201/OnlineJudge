@@ -10,22 +10,6 @@ import { HttpClient } from '@angular/common/http';
   imports: [CommonModule],
   template: `
     <div class="page">
-      <nav class="navbar">
-        <div class="nav-container">
-          <div class="logo">
-            <h1>OnlineJudge</h1>
-          </div>
-          <div class="nav-links">
-            <button (click)="goToProblems()" class="nav-btn">Problems</button>
-            <button (click)="goToSubmissions()" class="nav-btn">My Submissions</button>
-            @if (isAdmin()) {
-              <button (click)="goToAdmin()" class="nav-btn">Admin Panel</button>
-            }
-            <button (click)="logout()" class="btn-logout">Logout</button>
-          </div>
-        </div>
-      </nav>
-
       <div class="content">
         <div class="welcome-card">
           @if (isAuthenticated()) {
@@ -66,7 +50,11 @@ import { HttpClient } from '@angular/common/http';
               </div>
             </div>
           } @else {
-            <p>Loading...</p>
+            <div class="guest-welcome">
+              <h2>Welcome to OnlineJudge</h2>
+              <p>Please sign in to start solving problems.</p>
+              <button (click)="login()" class="btn-primary">Sign In</button>
+            </div>
           }
         </div>
       </div>
@@ -78,224 +66,111 @@ import { HttpClient } from '@angular/common/http';
       background: #ffffff;
     }
 
-    .navbar {
-      background: #000000;
-      padding: 1rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .nav-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-
-    .logo h1 {
-      color: white;
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: 2px solid white;
-      color: white;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
-    .nav-btn:hover {
-      background: white;
-      color: #000;
-    }
-
-    .btn-logout {
-      background: white;
-      border: 2px solid white;
-      color: #000;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-
-    .btn-logout:hover {
-      background: #f5f5f5;
-    }
-
     .content {
       max-width: 1200px;
       margin: 0 auto;
-      padding: 3rem 2rem;
+      padding: 2rem;
     }
 
     .welcome-card {
       background: white;
-      padding: 3rem;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
     }
 
     .user-info h2 {
       margin: 0 0 0.5rem 0;
-      font-size: 2rem;
-      color: #000;
+      color: #111827;
     }
 
     .email {
-      color: #666;
-      margin-bottom: 2rem;
+      color: #6b7280;
+      margin-bottom: 1.5rem;
     }
 
     .roles-section {
-      margin: 2rem 0;
-      padding: 1.5rem;
-      background: #f5f5f5;
-      border-radius: 8px;
-    }
-
-    .roles-section strong {
-      display: block;
-      margin-bottom: 1rem;
-      color: #000;
-      font-size: 1.1rem;
+      margin-bottom: 2rem;
     }
 
     .roles {
       display: flex;
       gap: 0.5rem;
+      margin-top: 0.5rem;
       flex-wrap: wrap;
     }
 
     .badge {
-      background: #000;
-      color: white;
-      padding: 0.4rem 1rem;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .quick-actions {
-      margin-top: 2rem;
+      background: #e0e7ff;
+      color: #4338ca;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
     }
 
     .quick-actions h3 {
-      margin: 0 0 1.5rem 0;
-      color: #000;
-      font-size: 1.5rem;
+      color: #374151;
+      margin-bottom: 1rem;
     }
 
     .action-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
+      gap: 1rem;
     }
 
     .action-card {
-      background: white;
-      padding: 2rem;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      text-align: center;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.5rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s;
+      background: #f9fafb;
     }
 
     .action-card:hover {
-      border-color: #000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transform: translateY(-4px);
+      border-color: #4f46e5;
+      background: #eef2ff;
+      transform: translateY(-2px);
     }
 
     .action-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .action-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #000;
+      font-size: 2rem;
       margin-bottom: 0.5rem;
     }
 
+    .action-title {
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 0.25rem;
+    }
+
     .action-desc {
-      color: #666;
-      font-size: 14px;
+      font-size: 0.875rem;
+      color: #6b7280;
     }
 
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      background: #333;
+    .guest-welcome {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+
+    .btn-primary {
+      background: #4f46e5;
       color: white;
-      border-radius: 4px;
-      font-size: 14px;
-      margin-right: 8px;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
     }
 
-    .token {
-      font-family: monospace;
-      font-size: 12px;
-      color: #666;
-      word-break: break-all;
-      padding: 10px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      margin-top: 8px;
-    }
-
-    .api-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .api-buttons button {
-      flex: 1;
-      padding: 10px;
-      font-size: 14px;
-    }
-
-    .api-result {
-      margin-top: 10px;
-      padding: 10px;
-      background: white;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
-      font-family: monospace;
-      font-size: 12px;
-      color: #333;
-      max-height: 200px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
-
-    .actions button {
-      margin: 0;
+    .btn-primary:hover {
+      background: #4338ca;
     }
   `]
 })
@@ -333,7 +208,15 @@ export class HomeComponent {
     this.router.navigate(['/admin/problems']);
   }
 
+  goToLeaderboard(): void {
+    this.router.navigate(['/leaderboard']);
+  }
+
   async logout(): Promise<void> {
     await this.authService.logout();
+  }
+
+  async login(): Promise<void> {
+    await this.authService.login();
   }
 }

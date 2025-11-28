@@ -6,7 +6,10 @@ import jakarta.validation.constraints.NotNull;
 public record SubmissionStatusUpdateRequest(
         @NotNull
         SubmissionStatus status,
-        String resultMessage
+        String resultMessage,
+        Double score,
+        Long executionTime,
+        Long memoryUsage
 ) {
 }
 

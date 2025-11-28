@@ -213,6 +213,7 @@ services:
       DB_PORT: 3306
       DB_USERNAME: submissionuser
       DB_PASSWORD: submissionpass123
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       config-server:
         condition: service_healthy
@@ -220,6 +221,8 @@ services:
         condition: service_healthy
       submission-mysql:
         condition: service_healthy
+      kafka:
+        condition: service_started
     networks:
       - microservices-network
 

@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .pathMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                 // Public endpoints
                 .pathMatchers("/api/v1/users/register", "/api/v1/users/login").permitAll()
+                .pathMatchers("/api/v1/submissions/leaderboard/**").permitAll()
                 .pathMatchers("/public/**").permitAll()
                 .pathMatchers("/actuator/**").permitAll()
                 

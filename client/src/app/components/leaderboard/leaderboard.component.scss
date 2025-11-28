@@ -1,0 +1,112 @@
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 3rem;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #6b7280;
+    font-size: 1.1rem;
+  }
+}
+
+.leaderboard-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+
+  th {
+    background-color: #f9fafb;
+    padding: 1rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #111827;
+    font-size: 0.95rem;
+    vertical-align: middle;
+  }
+
+  .data-row:last-child td {
+    border-bottom: none;
+  }
+
+  .data-row:hover {
+    background-color: #f9fafb;
+  }
+}
+
+.rank-col {
+  width: 80px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.user-col {
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      background-color: #e0e7ff;
+      color: #4f46e5;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .username {
+      font-weight: 500;
+    }
+  }
+}
+
+.score-col {
+  font-weight: 600;
+}
+
+.solved-col, .rate-col, .time-col {
+  color: #6b7280;
+}
+
+.loading-row {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+}

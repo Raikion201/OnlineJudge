@@ -44,5 +44,15 @@ public class SubmissionController {
     public List<SubmissionResponse> getMySubmissions(@RequestHeader(USER_HEADER) String userId) {
         return submissionApplicationService.getUserSubmissions(userId);
     }
+
+    @GetMapping("/leaderboard/{problemId}")
+    public List<com.submissionservice.submission.dto.LeaderboardEntryDTO> getLeaderboard(@PathVariable Long problemId) {
+        return submissionApplicationService.getLeaderboard(problemId);
+    }
+
+    @GetMapping("/leaderboard/global")
+    public List<com.submissionservice.submission.dto.GlobalLeaderboardDTO> getGlobalLeaderboard() {
+        return submissionApplicationService.getGlobalLeaderboard();
+    }
 }
 

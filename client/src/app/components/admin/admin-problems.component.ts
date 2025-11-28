@@ -398,11 +398,10 @@ export class AdminProblemsComponent implements OnInit {
         next: () => {
           this.showMessage('Problem updated successfully!', false);
           this.loadProblems();
-          this.resetForm();
         },
         error: (err) => {
           console.error('Update error:', err);
-          this.showMessage(`Update failed: ${err.error?.message || err.statusText}`, true);
+          this.showMessage('Failed to update problem', true);
         }
       });
     } else {
@@ -415,7 +414,7 @@ export class AdminProblemsComponent implements OnInit {
         },
         error: (err) => {
           console.error('Create error:', err);
-          this.showMessage(`Create failed: ${err.error?.message || err.statusText}`, true);
+          this.showMessage('Failed to create problem', true);
         }
       });
     }
@@ -436,7 +435,10 @@ export class AdminProblemsComponent implements OnInit {
         this.showMessage('Problem deleted successfully!', false);
         this.loadProblems();
       },
-      error: (err) => this.showMessage(`Delete failed: ${err.statusText}`, true)
+      error: (err) => {
+        console.error('Delete error:', err);
+        this.showMessage('Failed to delete problem', true);
+      }
     });
   }
 

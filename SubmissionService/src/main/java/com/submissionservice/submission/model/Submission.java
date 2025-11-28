@@ -38,6 +38,15 @@ public class Submission {
     @Column(nullable = false, length = 32)
     private String language;
 
+    @Column(nullable = false)
+    private Double score = 0.0;
+
+    @Column(nullable = false)
+    private Long executionTime = 0L;
+
+    @Column(nullable = false)
+    private Long memoryUsage = 0L;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private SubmissionStatus status;
@@ -58,12 +67,16 @@ public class Submission {
     }
 
     public Submission(Long id, Long problemId, String userId, String sourceCode, String language,
+                      Double score, Long executionTime, Long memoryUsage,
                       SubmissionStatus status, String resultMessage, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.problemId = problemId;
         this.userId = userId;
         this.sourceCode = sourceCode;
         this.language = language;
+        this.score = score;
+        this.executionTime = executionTime;
+        this.memoryUsage = memoryUsage;
         this.status = status;
         this.resultMessage = resultMessage;
         this.createdAt = createdAt;
@@ -140,6 +153,30 @@ public class Submission {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Double getScore() {
+        return score;
+    }
+
+    public void setScore(Double score) {
+        this.score = score;
+    }
+
+    public Long getExecutionTime() {
+        return executionTime;
+    }
+
+    public void setExecutionTime(Long executionTime) {
+        this.executionTime = executionTime;
+    }
+
+    public Long getMemoryUsage() {
+        return memoryUsage;
+    }
+
+    public void setMemoryUsage(Long memoryUsage) {
+        this.memoryUsage = memoryUsage;
     }
 }
 

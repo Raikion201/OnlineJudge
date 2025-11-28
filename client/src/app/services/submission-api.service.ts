@@ -19,6 +19,28 @@ export interface SubmissionResponse {
   createdAt: string;
   updatedAt: string;
   problemTitle?: string;
+  score?: number;
+  executionTime?: number;
+}
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  score: number;
+  executionTime: number;
+  language: string;
+  submittedAt: string;
+}
+
+export interface GlobalLeaderboardEntry {
+  rank: number;
+  userId: string;
+  username: string;
+  totalScore: number;
+  totalAccepted: number;
+  totalSubmissions: number;
+  lastSubmission: string;
+  acceptanceRate: number;
 }
 
 @Injectable({
@@ -34,6 +56,14 @@ export class SubmissionApiService {
 
   getMySubmissions(): Observable<SubmissionResponse[]> {
     return this.http.get<SubmissionResponse[]>(`${this.API_URL}/user/me`);
+  }
+
+  getLeaderboard(problemId: number): Observable<LeaderboardEntry[]> {
+    return this.http.get<LeaderboardEntry[]>(`${this.API_URL}/leaderboard/${problemId}`);
+  }
+
+  getGlobalLeaderboard(): Observable<GlobalLeaderboardEntry[]> {
+    return this.http.get<GlobalLeaderboardEntry[]>(`${this.API_URL}/leaderboard/global`);
   }
 }
 

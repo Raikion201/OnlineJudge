@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { SubmissionApiService, SubmissionPayload, SubmissionResponse } from '../../services/submission-api.service';
+import { SubmissionApiService, SubmissionPayload, SubmissionResponse, LeaderboardEntry } from '../../services/submission-api.service';
 
 interface ProblemDetail {
   id: number;
@@ -47,73 +47,124 @@ interface SubmissionFeedback {
       } @else if (problem()) {
         <div class="problem-layout">
           <div class="problem-panel">
-            <div class="problem-header">
-              <h1>{{ problem()!.id }}. {{ problem()!.title }}</h1>
-              <span class="difficulty" [class]="'difficulty-' + problem()!.difficulty.toLowerCase()">
-                {{ formatDifficulty(problem()!.difficulty) }}
-              </span>
+            <div class="tabs">
+              <button 
+                class="tab-btn" 
+                [class.active]="activeTab() === 'description'"
+                (click)="switchTab('description')">
+                Description
+              </button>
+              <button 
+                class="tab-btn" 
+                [class.active]="activeTab() === 'leaderboard'"
+                (click)="switchTab('leaderboard')">
+                Submission Results
+              </button>
             </div>
 
-            @if (problem()!.tags && problem()!.tags!.length > 0) {
-              <div class="tags">
-                @for (tag of problem()!.tags; track tag) {
-                  <span class="tag">{{ tag }}</span>
-                }
+            @if (activeTab() === 'description') {
+              <div class="problem-header">
+                <h1>{{ problem()!.id }}. {{ problem()!.title }}</h1>
+                <span class="difficulty" [class]="'difficulty-' + problem()!.difficulty.toLowerCase()">
+                  {{ formatDifficulty(problem()!.difficulty) }}
+                </span>
               </div>
-            }
 
-            <div class="meta">
-              <span>⏱️ Time Limit: {{ problem()!.timeLimit }}ms</span>
-              <span>💾 Memory Limit: {{ problem()!.memoryLimit }}MB</span>
-            </div>
+              @if (problem()!.tags && problem()!.tags!.length > 0) {
+                <div class="tags">
+                  @for (tag of problem()!.tags; track tag) {
+                    <span class="tag">{{ tag }}</span>
+                  }
+                </div>
+              }
 
-            <div class="section">
-              <h3>Description</h3>
-              <div class="content">{{ problem()!.description }}</div>
-            </div>
-
-            @if (problem()!.inputFormat) {
-              <div class="section">
-                <h3>Input Format</h3>
-                <div class="content">{{ problem()!.inputFormat }}</div>
+              <div class="meta">
+                <span>⏱️ Time Limit: {{ problem()!.timeLimit }}ms</span>
+                <span>💾 Memory Limit: {{ problem()!.memoryLimit }}MB</span>
               </div>
-            }
 
-            @if (problem()!.outputFormat) {
               <div class="section">
-                <h3>Output Format</h3>
-                <div class="content">{{ problem()!.outputFormat }}</div>
+                <h3>Description</h3>
+                <div class="content">{{ problem()!.description }}</div>
               </div>
-            }
 
-            @if (problem()!.constraints) {
-              <div class="section">
-                <h3>Constraints</h3>
-                <div class="content">{{ problem()!.constraints }}</div>
-              </div>
-            }
+              @if (problem()!.inputFormat) {
+                <div class="section">
+                  <h3>Input Format</h3>
+                  <div class="content">{{ problem()!.inputFormat }}</div>
+                </div>
+              }
 
-            @if (problem()!.examples && problem()!.examples!.length > 0) {
-              <div class="section">
-                <h3>Examples</h3>
-                @for (example of problem()!.examples; track $index) {
-                  <div class="example">
-                    <div class="example-title">Example {{ $index + 1 }}</div>
-                    <div class="example-block">
-                      <strong>Input:</strong>
-                      <pre>{{ example.input }}</pre>
-                    </div>
-                    <div class="example-block">
-                      <strong>Output:</strong>
-                      <pre>{{ example.output }}</pre>
-                    </div>
-                    @if (example.explanation) {
+              @if (problem()!.outputFormat) {
+                <div class="section">
+                  <h3>Output Format</h3>
+                  <div class="content">{{ problem()!.outputFormat }}</div>
+                </div>
+              }
+
+              @if (problem()!.constraints) {
+                <div class="section">
+                  <h3>Constraints</h3>
+                  <div class="content">{{ problem()!.constraints }}</div>
+                </div>
+              }
+
+              @if (problem()!.examples && problem()!.examples!.length > 0) {
+                <div class="section">
+                  <h3>Examples</h3>
+                  @for (example of problem()!.examples; track $index) {
+                    <div class="example">
+                      <div class="example-title">Example {{ $index + 1 }}</div>
                       <div class="example-block">
-                        <strong>Explanation:</strong>
-                        <p>{{ example.explanation }}</p>
+                        <strong>Input:</strong>
+                        <pre>{{ example.input }}</pre>
                       </div>
-                    }
-                  </div>
+                      <div class="example-block">
+                        <strong>Output:</strong>
+                        <pre>{{ example.output }}</pre>
+                      </div>
+                      @if (example.explanation) {
+                        <div class="example-block">
+                          <strong>Explanation:</strong>
+                          <p>{{ example.explanation }}</p>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            } @else if (activeTab() === 'leaderboard') {
+              <div class="leaderboard-container">
+                <h3>Submission Results</h3>
+                @if (loadingLeaderboard()) {
+                  <div class="loading-sm">Loading submission results...</div>
+                } @else if (leaderboard().length === 0) {
+                  <div class="empty-state">No submissions yet. Be the first!</div>
+                } @else {
+                  <table class="leaderboard-table">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                        <th>Language</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (entry of leaderboard(); track entry.userId; let i = $index) {
+                        <tr>
+                          <td>{{ i + 1 }}</td>
+                          <td class="username">{{ entry.username }}</td>
+                          <td class="score">{{ entry.score }}</td>
+                          <td>{{ entry.executionTime }}ms</td>
+                          <td>{{ entry.language }}</td>
+                          <td>{{ entry.submittedAt | date:'short' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
                 }
               </div>
             }
@@ -469,6 +520,79 @@ interface SubmissionFeedback {
       font-size: 16px;
     }
 
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 8px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .tab-btn.active {
+      background: #333;
+      color: white;
+    }
+
+    .tab-btn:hover:not(.active) {
+      background: #f5f5f5;
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .leaderboard-table th, .leaderboard-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .leaderboard-table th {
+      font-weight: 600;
+      color: #333;
+      background: #f9f9f9;
+    }
+
+    .leaderboard-table tr:hover {
+      background: #f5f5f5;
+    }
+
+    .username {
+      font-weight: 600;
+      color: #007bff;
+    }
+
+    .score {
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    .loading-sm {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+
     @media (max-width: 1200px) {
       .problem-layout {
         grid-template-columns: 1fr;
@@ -495,6 +619,9 @@ export class ProblemDetailComponent implements OnInit {
   submitting = signal(false);
   running = signal(false);
   submitResult = signal<SubmissionFeedback | null>(null);
+  activeTab = signal<'description' | 'leaderboard'>('description');
+  leaderboard = signal<LeaderboardEntry[]>([]);
+  loadingLeaderboard = signal(false);
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -589,5 +716,28 @@ export class ProblemDetailComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/problems']);
+  }
+
+  switchTab(tab: 'description' | 'leaderboard') {
+    this.activeTab.set(tab);
+    if (tab === 'leaderboard' && this.leaderboard().length === 0) {
+      this.fetchLeaderboard();
+    }
+  }
+
+  fetchLeaderboard() {
+    if (!this.problem()) return;
+    
+    this.loadingLeaderboard.set(true);
+    this.submissionApi.getLeaderboard(this.problem()!.id).subscribe({
+      next: (data) => {
+        this.leaderboard.set(data);
+        this.loadingLeaderboard.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to fetch leaderboard', err);
+        this.loadingLeaderboard.set(false);
+      }
+    });
   }
 }

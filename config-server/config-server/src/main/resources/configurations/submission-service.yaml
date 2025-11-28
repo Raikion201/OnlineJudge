@@ -2,9 +2,9 @@ spring:
   application:
     name: submission-service
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3309/submissions_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false}
-    username: ${SPRING_DATASOURCE_USERNAME:submissionuser}
-    password: ${SPRING_DATASOURCE_PASSWORD:submissionpass123}
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3309}/submissions_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:submissionuser}
+    password: ${DB_PASSWORD:submissionpass123}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
