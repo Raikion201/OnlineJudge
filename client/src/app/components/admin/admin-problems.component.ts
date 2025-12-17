@@ -9,8 +9,18 @@ interface Problem {
   id?: number;
   title: string;
   description: string;
+  inputFormat?: string;
+  outputFormat?: string;
+  constraints?: string;
   difficulty: string;
+  timeLimit?: number;
+  memoryLimit?: number;
+  isPublic?: boolean;
   tags?: string[];
+  // LeetCode-style function metadata
+  functionName?: string;
+  functionSignature?: string;
+  codeTemplate?: string;
 }
 
 @Component({
@@ -27,28 +37,97 @@ interface Problem {
       <div class="form-section">
         <h2>{{ editingId() ? 'Edit Problem' : 'Add New Problem' }}</h2>
         <form (ngSubmit)="saveProblem()">
-          <div class="form-group">
-            <label>Title *</label>
-            <input type="text" [(ngModel)]="form.title" name="title" required>
+          <!-- Basic Info Section -->
+          <div class="section-title">Basic Information</div>
+
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label>Title *</label>
+              <input type="text" [(ngModel)]="form.title" name="title" required>
+            </div>
+            <div class="form-group flex-1">
+              <label>Difficulty *</label>
+              <select [(ngModel)]="form.difficulty" name="difficulty" required>
+                <option value="EASY">Easy</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HARD">Hard</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
             <label>Description *</label>
-            <textarea [(ngModel)]="form.description" name="description" rows="5" required></textarea>
+            <textarea [(ngModel)]="form.description" name="description" rows="6" required placeholder="Describe the problem in detail..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Input Format</label>
+              <textarea [(ngModel)]="form.inputFormat" name="inputFormat" rows="3" placeholder="Describe the input format..."></textarea>
+            </div>
+            <div class="form-group flex-1">
+              <label>Output Format</label>
+              <textarea [(ngModel)]="form.outputFormat" name="outputFormat" rows="3" placeholder="Describe the output format..."></textarea>
+            </div>
           </div>
 
           <div class="form-group">
-            <label>Difficulty *</label>
-            <select [(ngModel)]="form.difficulty" name="difficulty" required>
-              <option value="EASY">Easy</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="HARD">Hard</option>
-            </select>
+            <label>Constraints</label>
+            <textarea [(ngModel)]="form.constraints" name="constraints" rows="3" placeholder="e.g., 1 <= n <= 10^5"></textarea>
+          </div>
+
+          <!-- Limits Section -->
+          <div class="section-title">Limits & Settings</div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Time Limit (ms)</label>
+              <input type="number" [(ngModel)]="form.timeLimit" name="timeLimit" min="100" max="10000">
+            </div>
+            <div class="form-group flex-1">
+              <label>Memory Limit (MB)</label>
+              <input type="number" [(ngModel)]="form.memoryLimit" name="memoryLimit" min="16" max="512">
+            </div>
+            <div class="form-group flex-1">
+              <label>Visibility</label>
+              <select [(ngModel)]="form.isPublic" name="isPublic">
+                <option [ngValue]="false">Private</option>
+                <option [ngValue]="true">Public</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
             <label>Tags (comma separated)</label>
             <input type="text" [(ngModel)]="tagsInput" name="tags" placeholder="Array, String, Math">
+          </div>
+
+          <!-- Solution Configuration (LeetCode-style) -->
+          <div class="section-title">
+            Solution Configuration
+            <span class="section-hint">(Define how users will write their solution)</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label>Function Name *</label>
+              <input type="text" [(ngModel)]="form.functionName" name="functionName" placeholder="e.g., twoSum" required>
+            </div>
+            <div class="form-group flex-2">
+              <label>Function Signature *</label>
+              <input type="text" [(ngModel)]="form.functionSignature" name="functionSignature" placeholder="e.g., int[] twoSum(int[] nums, int target)" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Code Template *</label>
+            <textarea [(ngModel)]="form.codeTemplate" name="codeTemplate" rows="8" class="code-textarea" placeholder="class Solution {
+    public int[] twoSum(int[] nums, int target) {
+        // Write your solution here
+
+    }
+}" required></textarea>
+            <p class="field-hint">This template will be shown to users when they start coding. Include the Solution class with the function signature.</p>
           </div>
 
           @if (message()) {
@@ -76,6 +155,7 @@ interface Problem {
               <tr>
                 <th>ID</th>
                 <th>Title</th>
+                <th>Function</th>
                 <th>Difficulty</th>
                 <th>Actions</th>
               </tr>
@@ -85,6 +165,9 @@ interface Problem {
                 <tr>
                   <td>{{ problem.id }}</td>
                   <td>{{ problem.title }}</td>
+                  <td class="function-cell">
+                    <code>{{ problem.functionName || '-' }}</code>
+                  </td>
                   <td>
                     <span class="difficulty" [class]="'difficulty-' + problem.difficulty.toLowerCase()">
                       {{ formatDifficulty(problem.difficulty) }}
@@ -98,7 +181,7 @@ interface Problem {
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4">No problems found.</td>
+                  <td colspan="5">No problems found.</td>
                 </tr>
               }
             </tbody>
@@ -291,6 +374,77 @@ interface Problem {
       background: #f8d7da;
       color: #721c24;
     }
+
+    /* Form Layout */
+    .form-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-row .form-group {
+      margin-bottom: 0;
+    }
+
+    .flex-1 {
+      flex: 1;
+    }
+
+    .flex-2 {
+      flex: 2;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin: 30px 0 15px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .section-hint {
+      font-size: 12px;
+      font-weight: 400;
+      color: #666;
+      margin-left: 8px;
+    }
+
+    .field-hint {
+      margin: 6px 0 0 0;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .code-textarea {
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      background: #1e1e1e;
+      color: #e4e4e7;
+      border-color: #333;
+    }
+
+    .code-textarea:focus {
+      border-color: #0ea5e9;
+    }
+
+    .code-textarea::placeholder {
+      color: #6b7280;
+    }
+
+    /* Function Cell */
+    .function-cell code {
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      background: #f1f5f9;
+      color: #0369a1;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
   `]
 })
 export class AdminProblemsComponent implements OnInit {
@@ -308,7 +462,16 @@ export class AdminProblemsComponent implements OnInit {
   form: Problem = {
     title: '',
     description: '',
-    difficulty: 'EASY'
+    inputFormat: '',
+    outputFormat: '',
+    constraints: '',
+    difficulty: 'EASY',
+    timeLimit: 1000,
+    memoryLimit: 256,
+    isPublic: false,
+    functionName: '',
+    functionSignature: '',
+    codeTemplate: ''
   };
   tagsInput = '';
 
@@ -380,13 +543,26 @@ export class AdminProblemsComponent implements OnInit {
   }
 
   saveProblem() {
+    // Validate required LeetCode-style fields
+    if (!this.form.functionName || !this.form.functionSignature || !this.form.codeTemplate) {
+      this.showMessage('Function Name, Signature, and Code Template are required', true);
+      return;
+    }
+
     const problem: any = {
       title: this.form.title,
       description: this.form.description,
+      inputFormat: this.form.inputFormat || '',
+      outputFormat: this.form.outputFormat || '',
+      constraints: this.form.constraints || '',
       difficulty: this.form.difficulty.toUpperCase(),
-      timeLimit: 1000,
-      memoryLimit: 256,
-      isPublic: false,
+      timeLimit: this.form.timeLimit || 1000,
+      memoryLimit: this.form.memoryLimit || 256,
+      isPublic: this.form.isPublic || false,
+      // LeetCode-style fields (always required)
+      functionName: this.form.functionName,
+      functionSignature: this.form.functionSignature,
+      codeTemplate: this.form.codeTemplate,
       testCases: [],
       examples: [],
       tagIds: []
@@ -422,7 +598,15 @@ export class AdminProblemsComponent implements OnInit {
 
   editProblem(problem: Problem) {
     this.editingId.set(problem.id || null);
-    this.form = { ...problem };
+    this.form = {
+      ...problem,
+      timeLimit: problem.timeLimit || 1000,
+      memoryLimit: problem.memoryLimit || 256,
+      isPublic: problem.isPublic || false,
+      functionName: problem.functionName || '',
+      functionSignature: problem.functionSignature || '',
+      codeTemplate: problem.codeTemplate || ''
+    };
     this.tagsInput = problem.tags?.join(', ') || '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -450,7 +634,16 @@ export class AdminProblemsComponent implements OnInit {
     this.form = {
       title: '',
       description: '',
-      difficulty: 'EASY'
+      inputFormat: '',
+      outputFormat: '',
+      constraints: '',
+      difficulty: 'EASY',
+      timeLimit: 1000,
+      memoryLimit: 256,
+      isPublic: false,
+      functionName: '',
+      functionSignature: '',
+      codeTemplate: ''
     };
     this.tagsInput = '';
     this.editingId.set(null);

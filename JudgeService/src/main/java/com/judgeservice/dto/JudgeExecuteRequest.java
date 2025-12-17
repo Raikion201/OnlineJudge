@@ -10,6 +10,11 @@ public class JudgeExecuteRequest {
     private Integer timeLimit;
     private Integer memoryLimit;
 
+    // LeetCode-style function metadata
+    private String functionName;
+    private String functionSignature;
+    private boolean leetcodeStyle;
+
     public JudgeExecuteRequest() {
     }
 
@@ -22,6 +27,22 @@ public class JudgeExecuteRequest {
         this.expectedOutput = expectedOutput;
         this.timeLimit = timeLimit;
         this.memoryLimit = memoryLimit;
+    }
+
+    public JudgeExecuteRequest(Long submissionId, Long testCaseId, String code, String language, String input,
+                               String expectedOutput, Integer timeLimit, Integer memoryLimit,
+                               String functionName, String functionSignature, boolean leetcodeStyle) {
+        this.submissionId = submissionId;
+        this.testCaseId = testCaseId;
+        this.code = code;
+        this.language = language;
+        this.input = input;
+        this.expectedOutput = expectedOutput;
+        this.timeLimit = timeLimit;
+        this.memoryLimit = memoryLimit;
+        this.functionName = functionName;
+        this.functionSignature = functionSignature;
+        this.leetcodeStyle = leetcodeStyle;
     }
 
     public Long getSubmissionId() {
@@ -86,6 +107,30 @@ public class JudgeExecuteRequest {
 
     public void setMemoryLimit(Integer memoryLimit) {
         this.memoryLimit = memoryLimit;
+    }
+
+    public String getFunctionName() {
+        return functionName;
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
+    }
+
+    public String getFunctionSignature() {
+        return functionSignature;
+    }
+
+    public void setFunctionSignature(String functionSignature) {
+        this.functionSignature = functionSignature;
+    }
+
+    public boolean isLeetcodeStyle() {
+        return leetcodeStyle;
+    }
+
+    public void setLeetcodeStyle(boolean leetcodeStyle) {
+        this.leetcodeStyle = leetcodeStyle;
     }
 }
 

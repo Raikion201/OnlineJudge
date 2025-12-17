@@ -21,6 +21,10 @@ public class ProblemResponse {
     private String inputFormat;
     private String outputFormat;
     private String constraints;
+    // LeetCode-style function metadata
+    private String functionName;
+    private String functionSignature;
+    private String codeTemplate;
     private Difficulty difficulty;
     private int timeLimit;
     private int memoryLimit;

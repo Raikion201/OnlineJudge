@@ -16,5 +16,10 @@ public class JudgeExecuteRequest {
     private String expectedOutput;
     private Integer timeLimit;
     private Integer memoryLimit;
+
+    // LeetCode-style function metadata
+    private String functionName;
+    private String functionSignature;
+    private boolean leetcodeStyle;
 }
 

@@ -30,21 +30,31 @@ public class Problem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "title")
-
+    @Column(name = "title", length = 500)
     private String title;
-    @Column(name = "description")
 
+    @Column(name = "description", columnDefinition = "MEDIUMTEXT")
     private String description;
-    @Column(name = "input_format")
 
+    @Column(name = "input_format", columnDefinition = "TEXT")
     private String input_format;
-    @Column(name = "output_format")
 
+    @Column(name = "output_format", columnDefinition = "TEXT")
     private String output_format;
-    @Column(name = "constraints")
 
+    @Column(name = "constraints", columnDefinition = "TEXT")
     private String constraints;
+
+    // LeetCode-style function metadata
+    @Column(name = "function_name", length = 100)
+    private String functionName;
+
+    @Column(name = "function_signature", length = 500)
+    private String functionSignature;
+
+    @Column(name = "code_template", columnDefinition = "TEXT")
+    private String codeTemplate;
+
     @Column(name = "difficulty")
 
     private Difficulty difficulty;

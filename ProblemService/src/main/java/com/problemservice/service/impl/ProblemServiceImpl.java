@@ -309,6 +309,9 @@ public class ProblemServiceImpl implements ProblemService {
                 .input_format(request.getInputFormat())  // Match entity field name
                 .output_format(request.getOutputFormat()) // Match entity field name
                 .constraints(request.getConstraints())
+                .functionName(request.getFunctionName())
+                .functionSignature(request.getFunctionSignature())
+                .codeTemplate(request.getCodeTemplate())
                 .difficulty(request.getDifficulty())
                 .time_limit(request.getTimeLimit())  // Match entity field name
                 .memory_limit(request.getMemoryLimit()) // Match entity field name
@@ -365,6 +368,9 @@ public class ProblemServiceImpl implements ProblemService {
                 .inputFormat(problem.getInput_format())  // Match entity field name
                 .outputFormat(problem.getOutput_format()) // Match entity field name
                 .constraints(problem.getConstraints())
+                .functionName(problem.getFunctionName())
+                .functionSignature(problem.getFunctionSignature())
+                .codeTemplate(problem.getCodeTemplate())
                 .difficulty(problem.getDifficulty())
                 .timeLimit(problem.getTime_limit())  // Match entity field name
                 .memoryLimit(problem.getMemory_limit()) // Match entity field name

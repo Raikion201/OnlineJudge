@@ -90,6 +90,10 @@ public class JudgeCoordinatorService {
             int timeLimit = problem.getTimeLimit();
             int memoryLimit = problem.getMemoryLimit();
 
+            // Check if this is a LeetCode-style problem
+            boolean leetcodeStyle = problem.getFunctionName() != null && !problem.getFunctionName().isEmpty()
+                    && problem.getFunctionSignature() != null && !problem.getFunctionSignature().isEmpty();
+
             for (TestCaseResponse testCase : hiddenTestCases) {
                 JudgeExecuteRequest executeRequest = new JudgeExecuteRequest();
                 executeRequest.setSubmissionId(submissionId);
@@ -100,6 +104,11 @@ public class JudgeCoordinatorService {
                 executeRequest.setExpectedOutput(testCase.getExpectedOutput());
                 executeRequest.setTimeLimit(testCase.getTimeLimit() != null ? testCase.getTimeLimit() : timeLimit);
                 executeRequest.setMemoryLimit(testCase.getMemoryLimit() != null ? testCase.getMemoryLimit() : memoryLimit);
+
+                // Set LeetCode-style fields
+                executeRequest.setLeetcodeStyle(leetcodeStyle);
+                executeRequest.setFunctionName(problem.getFunctionName());
+                executeRequest.setFunctionSignature(problem.getFunctionSignature());
 
                 try {
                     kafkaTemplate.send(JUDGE_EXECUTE_TOPIC, String.valueOf(submissionId), executeRequest);

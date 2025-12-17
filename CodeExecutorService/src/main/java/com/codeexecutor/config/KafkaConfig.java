@@ -21,7 +21,29 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers:localhost:29093}")
     private String bootstrapServers;
 
-    // Consumer for judge.execute topic
+    // Shared consumer factory with JSON deserialization
+    @Bean
+    public ConsumerFactory<String, Map<String, Object>> consumerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "java.util.HashMap");
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        return new DefaultKafkaConsumerFactory<>(configProps);
+    }
+
+    // Default Kafka listener container factory (used by all listeners)
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, Map<String, Object>> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, Map<String, Object>> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        return factory;
+    }
+
+    // Consumer for judge.execute topic (supports DTO deserialization with type headers)
     @Bean
     public ConsumerFactory<String, Object> judgeExecuteConsumerFactory() {
         Map<String, Object> configProps = new HashMap<>();

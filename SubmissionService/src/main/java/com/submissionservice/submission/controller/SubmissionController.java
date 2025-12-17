@@ -1,7 +1,10 @@
 package com.submissionservice.submission.controller;
 
+import com.submissionservice.submission.dto.RunCodeRequest;
+import com.submissionservice.submission.dto.RunCodeResponse;
 import com.submissionservice.submission.dto.SubmissionRequest;
 import com.submissionservice.submission.dto.SubmissionResponse;
+import com.submissionservice.submission.service.RunCodeService;
 import com.submissionservice.submission.service.SubmissionApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -22,9 +25,12 @@ public class SubmissionController {
 
     private static final String USER_HEADER = "X-User-Id";
     private final SubmissionApplicationService submissionApplicationService;
+    private final RunCodeService runCodeService;
 
-    public SubmissionController(SubmissionApplicationService submissionApplicationService) {
+    public SubmissionController(SubmissionApplicationService submissionApplicationService,
+                                RunCodeService runCodeService) {
         this.submissionApplicationService = submissionApplicationService;
+        this.runCodeService = runCodeService;
     }
 
     @PostMapping
@@ -53,6 +59,12 @@ public class SubmissionController {
     @GetMapping("/leaderboard/global")
     public List<com.submissionservice.submission.dto.GlobalLeaderboardDTO> getGlobalLeaderboard() {
         return submissionApplicationService.getGlobalLeaderboard();
+    }
+
+    @PostMapping("/run")
+    public RunCodeResponse runCode(@Valid @RequestBody RunCodeRequest request,
+                                   @RequestHeader(USER_HEADER) String userId) {
+        return runCodeService.runCode(request, userId);
     }
 }
 

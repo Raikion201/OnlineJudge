@@ -18,6 +18,11 @@ public class ProblemResponse {
     private int totalAccepted;
     private Set<TestCaseResponse> testCases;
 
+    // LeetCode-style function metadata
+    private String functionName;
+    private String functionSignature;
+    private String codeTemplate;
+
     public ProblemResponse() {
     }
 
@@ -148,6 +153,30 @@ public class ProblemResponse {
 
     public void setTestCases(Set<TestCaseResponse> testCases) {
         this.testCases = testCases;
+    }
+
+    public String getFunctionName() {
+        return functionName;
+    }
+
+    public void setFunctionName(String functionName) {
+        this.functionName = functionName;
+    }
+
+    public String getFunctionSignature() {
+        return functionSignature;
+    }
+
+    public void setFunctionSignature(String functionSignature) {
+        this.functionSignature = functionSignature;
+    }
+
+    public String getCodeTemplate() {
+        return codeTemplate;
+    }
+
+    public void setCodeTemplate(String codeTemplate) {
+        this.codeTemplate = codeTemplate;
     }
 }
 

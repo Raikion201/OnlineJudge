@@ -1,23 +1,99 @@
-<nav class="navbar">
-  <div class="container">
-    <a routerLink="/" class="brand">
-      <div class="logo-icon"></div>
-      CodeJudge
-    </a>
-    <div class="nav-links">
-      <a routerLink="/problems" routerLinkActive="active">Problems</a>
-      <a routerLink="/leaderboard" routerLinkActive="active">Leaderboard</a>
-      <a routerLink="/submissions" routerLinkActive="active">Submissions</a>
-      <a href="#">Docs</a>
+<header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-50">
+  <nav class="container-max flex items-center justify-between h-16">
+    <!-- Logo -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <a routerLink="/" class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-gradient-to-br from-primary-600 to-accent-600 rounded-lg flex items-center justify-center">
+          <span class="text-white font-bold text-lg">&lt;/&gt;</span>
+        </div>
+        <span class="text-xl font-bold text-slate-900">CodeJudge</span>
+      </a>
     </div>
-    <div class="auth-buttons">
+
+    <!-- Navigation -->
+    <div class="hidden md:flex items-center gap-8">
+      <a
+        routerLink="/problems"
+        routerLinkActive="text-primary-600 font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="text-slate-700 hover:text-primary-600 transition-colors font-medium"
+      >
+        Problems
+      </a>
+      <a
+        routerLink="/leaderboard"
+        routerLinkActive="text-primary-600 font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="text-slate-700 hover:text-primary-600 transition-colors font-medium"
+      >
+        Leaderboard
+      </a>
+      <a
+        routerLink="/submissions"
+        routerLinkActive="text-primary-600 font-semibold"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="text-slate-700 hover:text-primary-600 transition-colors font-medium"
+      >
+        Submissions
+      </a>
       @if (isAuthenticated()) {
-        <span class="username">Hi, {{ userProfile()?.username }}</span>
-        <button (click)="logout()" class="btn-text">Logout</button>
-      } @else {
-        <button (click)="login()" class="btn-text">Sign In</button>
-        <button (click)="login()" class="btn-primary">Sign Up</button>
+        <a
+          routerLink="/bookmarks"
+          routerLinkActive="text-primary-600 font-semibold"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="text-slate-700 hover:text-primary-600 transition-colors font-medium"
+        >
+          Saved
+        </a>
       }
     </div>
-  </div>
-</nav>
+
+    <!-- User Menu -->
+    <div class="flex items-center gap-4">
+      @if (isAuthenticated()) {
+        <div class="user-menu-container">
+          <button class="user-menu-trigger">
+            <div class="user-avatar">
+              {{ userProfile()?.username?.charAt(0)?.toUpperCase() }}
+            </div>
+            <span class="user-name">{{ userProfile()?.username }}</span>
+            <svg class="dropdown-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          <!-- Dropdown Menu -->
+          <div class="user-dropdown">
+            <a routerLink="/profile" class="dropdown-item">
+              <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+              My Profile
+            </a>
+            <a routerLink="/bookmarks" class="dropdown-item">
+              <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+              </svg>
+              Saved Problems
+            </a>
+            <a routerLink="/submissions" class="dropdown-item">
+              <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+              My Submissions
+            </a>
+            <div class="dropdown-divider"></div>
+            <button (click)="logout()" class="dropdown-item dropdown-item-danger">
+              <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              Logout
+            </button>
+          </div>
+        </div>
+      } @else {
+        <button (click)="login()" class="btn-ghost text-sm">Sign In</button>
+        <button (click)="login()" class="btn-primary text-sm">Sign Up</button>
+      }
+    </div>
+  </nav>
+</header>
