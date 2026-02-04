@@ -1,0 +1,258 @@
+package com.judgeservice.service;
+
+import com.judgeservice.client.ProblemClient;
+import com.judgeservice.client.SubmissionClient;
+import com.judgeservice.client.dto.ProblemResponse;
+import com.judgeservice.client.dto.SubmissionResponse;
+import com.judgeservice.client.dto.SubmissionStatusUpdateRequest;
+import com.judgeservice.client.dto.TestCaseResponse;
+import com.judgeservice.dto.JudgeExecuteRequest;
+import com.judgeservice.dto.JudgeResult;
+import feign.FeignException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Service;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+public class JudgeCoordinatorService {
+
+    private static final Logger log = LoggerFactory.getLogger(JudgeCoordinatorService.class);
+    private static final String JUDGE_EXECUTE_TOPIC = "judge.execute";
+
+    private final SubmissionClient submissionClient;
+    private final ProblemClient problemClient;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    // Track pending test cases for each submission
+    // Key: submissionId, Value: Set of testCaseIds that are pending
+    private final Map<Long, Set<Long>> pendingTestCases = new ConcurrentHashMap<>();
+
+    // Track results for each submission
+    // Key: submissionId, Value: List of results
+    private final Map<Long, List<JudgeResult>> submissionResults = new ConcurrentHashMap<>();
+
+    public JudgeCoordinatorService(SubmissionClient submissionClient,
+                                   ProblemClient problemClient,
+                                   KafkaTemplate<String, Object> kafkaTemplate) {
+        this.submissionClient = submissionClient;
+        this.problemClient = problemClient;
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    public void processSubmission(Long submissionId) {
+        log.info("Processing submission: {}", submissionId);
+
+        try {
+            // 1. Get submission details from SubmissionService
+            SubmissionResponse submission = submissionClient.getSubmission(submissionId);
+            log.debug("Retrieved submission {}: problemId={}, language={}", 
+                    submissionId, submission.getProblemId(), submission.getLanguage());
+
+            // 2. Get problem and test cases from ProblemService
+            ProblemResponse problem = problemClient.getProblemById(submission.getProblemId());
+            log.debug("Retrieved problem {} with {} test cases", 
+                    problem.getId(), problem.getTestCases() != null ? problem.getTestCases().size() : 0);
+
+            if (problem.getTestCases() == null || problem.getTestCases().isEmpty()) {
+                log.warn("Problem {} has no test cases", problem.getId());
+                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test cases found for problem", null, null, null);
+                return;
+            }
+
+            // Filter out sample test cases - only judge against hidden test cases
+            List<TestCaseResponse> hiddenTestCases = problem.getTestCases().stream()
+                    .filter(tc -> !tc.isSample())
+                    .sorted(Comparator.comparingInt(TestCaseResponse::getOrdering))
+                    .toList();
+
+            if (hiddenTestCases.isEmpty()) {
+                log.warn("Problem {} has no hidden test cases", problem.getId());
+                updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No hidden test cases found for problem", null, null, null);
+                return;
+            }
+
+            // 3. Initialize tracking for this submission
+            Set<Long> testCaseIds = new HashSet<>();
+            for (TestCaseResponse testCase : hiddenTestCases) {
+                testCaseIds.add(testCase.getId());
+            }
+            pendingTestCases.put(submissionId, new HashSet<>(testCaseIds));
+            submissionResults.put(submissionId, new ArrayList<>());
+
+            // 4. Update submission status to RUNNING
+            updateSubmissionStatus(submissionId, "RUNNING", "Processing test cases", null, null, null);
+
+            // 5. Publish jobs to judge.execute topic for each test case
+            int timeLimit = problem.getTimeLimit();
+            int memoryLimit = problem.getMemoryLimit();
+
+            // Check if this is a LeetCode-style problem
+            boolean leetcodeStyle = problem.getFunctionName() != null && !problem.getFunctionName().isEmpty()
+                    && problem.getFunctionSignature() != null && !problem.getFunctionSignature().isEmpty();
+
+            for (TestCaseResponse testCase : hiddenTestCases) {
+                JudgeExecuteRequest executeRequest = new JudgeExecuteRequest();
+                executeRequest.setSubmissionId(submissionId);
+                executeRequest.setTestCaseId(testCase.getId());
+                executeRequest.setCode(submission.getCode());
+                executeRequest.setLanguage(submission.getLanguage());
+                executeRequest.setInput(testCase.getInput());
+                executeRequest.setExpectedOutput(testCase.getExpectedOutput());
+                executeRequest.setTimeLimit(testCase.getTimeLimit() != null ? testCase.getTimeLimit() : timeLimit);
+                executeRequest.setMemoryLimit(testCase.getMemoryLimit() != null ? testCase.getMemoryLimit() : memoryLimit);
+
+                // Set LeetCode-style fields
+                executeRequest.setLeetcodeStyle(leetcodeStyle);
+                executeRequest.setFunctionName(problem.getFunctionName());
+                executeRequest.setFunctionSignature(problem.getFunctionSignature());
+
+                try {
+                    kafkaTemplate.send(JUDGE_EXECUTE_TOPIC, String.valueOf(submissionId), executeRequest);
+                    log.debug("Published judge job for submission {} test case {}", 
+                            submissionId, testCase.getId());
+                } catch (Exception ex) {
+                    log.error("Failed to publish judge job for submission {} test case {}", 
+                            submissionId, testCase.getId(), ex);
+                }
+            }
+
+            log.info("Published {} judge jobs for submission {}", hiddenTestCases.size(), submissionId);
+
+        } catch (FeignException.NotFound ex) {
+            log.error("Submission {} or problem not found", submissionId, ex);
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Submission or problem not found", null, null, null);
+        } catch (FeignException ex) {
+            log.error("Error fetching submission {} or problem details", submissionId, ex);
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Failed to fetch submission or problem details", null, null, null);
+        } catch (Exception ex) {
+            log.error("Unexpected error processing submission {}", submissionId, ex);
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "Unexpected error: " + ex.getMessage(), null, null, null);
+        }
+    }
+
+    public void processJudgeResult(JudgeResult result) {
+        log.info("Processing judge result for submission {} test case {}: {}", 
+                result.getSubmissionId(), result.getTestCaseId(), result.getVerdict());
+
+        Long submissionId = result.getSubmissionId();
+        Long testCaseId = result.getTestCaseId();
+
+        // Add result to the list
+        submissionResults.computeIfAbsent(submissionId, k -> new ArrayList<>()).add(result);
+
+        // Remove test case from pending set
+        Set<Long> pending = pendingTestCases.get(submissionId);
+        if (pending != null) {
+            pending.remove(testCaseId);
+
+            // If all test cases are complete, determine final verdict
+            if (pending.isEmpty()) {
+                determineFinalVerdict(submissionId);
+            }
+        } else {
+            log.warn("Received result for submission {} but no pending test cases tracked", submissionId);
+        }
+    }
+
+    private void determineFinalVerdict(Long submissionId) {
+        log.info("Determining final verdict for submission {}", submissionId);
+
+        List<JudgeResult> results = submissionResults.get(submissionId);
+        if (results == null || results.isEmpty()) {
+            log.warn("No results found for submission {}", submissionId);
+            updateSubmissionStatus(submissionId, "SYSTEM_ERROR", "No test case results found", null, null, null);
+            return;
+        }
+
+        // Check results in order of priority
+        String finalVerdict = "ACCEPTED";
+        String resultMessage = null;
+        int passedCount = 0;
+        int totalCount = results.size();
+        long maxExecutionTime = 0L;
+        long maxMemoryUsage = 0L;
+
+        for (JudgeResult result : results) {
+            String verdict = result.getVerdict();
+            
+            // Track passed test cases
+            if ("ACCEPTED".equals(verdict)) {
+                passedCount++;
+            }
+            
+            // Track max execution time and memory
+            if (result.getExecutionTime() != null) {
+                maxExecutionTime = Math.max(maxExecutionTime, result.getExecutionTime());
+            }
+            if (result.getMemoryUsed() != null) {
+                maxMemoryUsage = Math.max(maxMemoryUsage, result.getMemoryUsed());
+            }
+            
+            // Priority order: SYSTEM_ERROR > COMPILATION_ERROR > RUNTIME_ERROR > 
+            // TIME_LIMIT_EXCEEDED > MEMORY_LIMIT_EXCEEDED > WRONG_ANSWER > ACCEPTED
+            if ("SYSTEM_ERROR".equals(verdict)) {
+                finalVerdict = "SYSTEM_ERROR";
+                resultMessage = "System error occurred during execution";
+                break;
+            } else if ("COMPILATION_ERROR".equals(verdict)) {
+                finalVerdict = "COMPILATION_ERROR";
+                resultMessage = result.getErrorMessage() != null ? result.getErrorMessage() : "Compilation failed";
+                break;
+            } else if ("RUNTIME_ERROR".equals(verdict)) {
+                finalVerdict = "RUNTIME_ERROR";
+                if (resultMessage == null) {
+                    resultMessage = result.getErrorMessage() != null ? result.getErrorMessage() : "Runtime error occurred";
+                }
+            } else if ("TIME_LIMIT_EXCEEDED".equals(verdict)) {
+                if (!"RUNTIME_ERROR".equals(finalVerdict)) {
+                    finalVerdict = "TIME_LIMIT_EXCEEDED";
+                    resultMessage = "Time limit exceeded";
+                }
+            } else if ("MEMORY_LIMIT_EXCEEDED".equals(verdict)) {
+                if (!"RUNTIME_ERROR".equals(finalVerdict) && !"TIME_LIMIT_EXCEEDED".equals(finalVerdict)) {
+                    finalVerdict = "MEMORY_LIMIT_EXCEEDED";
+                    resultMessage = "Memory limit exceeded";
+                }
+            } else if ("WRONG_ANSWER".equals(verdict)) {
+                if ("ACCEPTED".equals(finalVerdict)) {
+                    finalVerdict = "WRONG_ANSWER";
+                    resultMessage = "Wrong answer on test case " + result.getTestCaseId();
+                }
+            }
+        }
+
+        // Calculate score (percentage of passed test cases * 100)
+        Double score = totalCount > 0 ? (double) passedCount / totalCount * 100.0 : 0.0;
+        
+        // Update submission with final verdict, score, and metrics
+        updateSubmissionStatus(submissionId, finalVerdict, resultMessage, score, maxExecutionTime, maxMemoryUsage);
+
+        // Clean up tracking data
+        pendingTestCases.remove(submissionId);
+        submissionResults.remove(submissionId);
+
+        log.info("Final verdict for submission {}: {} (Score: {}/100, Time: {}ms, Memory: {}KB)", 
+                submissionId, finalVerdict, score, maxExecutionTime, maxMemoryUsage);
+    }
+
+    private void updateSubmissionStatus(Long submissionId, String status, String resultMessage, 
+                                       Double score, Long executionTime, Long memoryUsage) {
+        try {
+            SubmissionStatusUpdateRequest request = new SubmissionStatusUpdateRequest();
+            request.setStatus(status);
+            request.setResultMessage(resultMessage);
+            request.setScore(score);
+            request.setExecutionTime(executionTime);
+            request.setMemoryUsage(memoryUsage);
+            submissionClient.updateSubmissionStatus(submissionId, request);
+            log.debug("Updated submission {} status to {} with score {}", submissionId, status, score);
+        } catch (Exception ex) {
+            log.error("Failed to update submission {} status to {}", submissionId, status, ex);
+        }
+    }
+}
+

@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - StripPrefix=0
+        - id: problem-service
+          uri: lb://PROBLEM-SERVICE
+          predicates:
+            - Path=/api/v1/problems/**
+          filters:
+            - StripPrefix=0
+        - id: submission-service
+          uri: lb://SUBMISSION-SERVICE
+          predicates:
+            - Path=/api/v1/submissions/**
+          filters:
+            - StripPrefix=0
+        - id: tags-service
+          uri: lb://PROBLEM-SERVICE
+          predicates:
+            - Path=/api/v1/tags/**
+          filters:
+            - StripPrefix=0
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - ${ALLOWED_ORIGIN:http://localhost:4200}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://${KEYCLOAK_HOST:localhost}:${KEYCLOAK_PORT:8321}/realms/online-judge}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://${KEYCLOAK_HOST:localhost}:${KEYCLOAK_PORT:8321}/realms/online-judge/protocol/openid-connect/certs}
+
+server:
+  port: ${SERVER_PORT:8087}
+
+eureka:
+  client:
+    enabled: ${EUREKA_CLIENT_ENABLED:true}
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${random.uuid}

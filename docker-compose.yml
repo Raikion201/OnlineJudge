@@ -1,0 +1,426 @@
+services:
+  # Config Server
+  config-server:
+    profiles: ["infra"]
+    build:
+      context: ./config-server/config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    restart: always
+    ports:
+      - "8888:8888"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Discovery Service (Eureka)
+  discovery-service:
+    profiles: ["infra"]
+    build:
+      context: ./discovery
+      dockerfile: Dockerfile
+    container_name: discovery-service
+    restart: always
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      EUREKA_INSTANCE_HOSTNAME: discovery-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8761/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # MySQL Database for User Service
+  user-mysql:
+    profiles: ["infra"]
+    image: mysql:8.0
+    container_name: user-service-mysql
+    restart: always
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: user_service_db
+      MYSQL_USER: useruser
+      MYSQL_PASSWORD: userpass123
+    volumes:
+      - user-mysql-data:/var/lib/mysql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL Database for Problem Service
+  problem-mysql:
+    profiles: ["infra"]
+    image: mysql:8.0
+    container_name: problem-service-mysql
+    restart: always
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: problem_service_db
+      MYSQL_USER: problemuser
+      MYSQL_PASSWORD: problempass123
+    volumes:
+      - problem-mysql-data:/var/lib/mysql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  submission-mysql:
+    profiles: ["infra"]
+    image: mysql:8.0
+    container_name: submission-service-mysql
+    restart: always
+    ports:
+      - "3309:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass123
+      MYSQL_DATABASE: submissions_service_db
+      MYSQL_USER: submissionuser
+      MYSQL_PASSWORD: submissionpass123
+    volumes:
+      - submission-mysql-data:/var/lib/mysql
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # User Service
+  user-service:
+    profiles: ["services"]
+    build:
+      context: ./UserService
+      dockerfile: Dockerfile
+    container_name: user-service
+    restart: always
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      DB_HOST: user-mysql
+      DB_PORT: 3306
+      DB_USERNAME: useruser
+      DB_PASSWORD: userpass123
+      SERVER_PORT: 8082
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      user-mysql:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  # Problem Service
+  problem-service:
+    profiles: ["services"]
+    build:
+      context: ./ProblemService
+      dockerfile: Dockerfile
+    container_name: problem-service
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_URL: jdbc:mysql://problem-mysql:3306/problem_service_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: problemuser
+      SPRING_DATASOURCE_PASSWORD: problempass123
+      SERVER_PORT: 8080
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      problem-mysql:
+        condition: service_healthy
+    networks:
+      - microservices-network
+
+  # Judge Service
+  judge-service:
+    profiles: ["services"]
+    build:
+      context: ./JudgeService
+      dockerfile: Dockerfile
+    container_name: judge-service
+    restart: always
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SERVER_PORT: 8083
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  # Submission Service
+  submission-service:
+    profiles: ["services"]
+    build:
+      context: ./SubmissionService
+      dockerfile: Dockerfile
+    container_name: submission-service
+    restart: always
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SERVER_PORT: 8084
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      DB_HOST: submission-mysql
+      DB_PORT: 3306
+      DB_USERNAME: submissionuser
+      DB_PASSWORD: submissionpass123
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      submission-mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  # Code Executor Service
+  code-executor-service:
+    profiles: ["services"]
+    build:
+      context: ./CodeExecutorService
+      dockerfile: Dockerfile
+    container_name: code-executor-service
+    restart: always
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SERVER_PORT: 8086
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      config-server:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - microservices-network
+    # Run with additional privileges for ulimit (required for resource limits)
+    cap_add:
+      - SYS_RESOURCE
+    security_opt:
+      - seccomp:unconfined
+
+  # API Gateway
+  api-gateway:
+    profiles: ["services"]
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: always
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SERVER_PORT: 8087
+      EUREKA_CLIENT_ENABLED: "true"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      KEYCLOAK_HOST: keycloak
+      KEYCLOAK_PORT: 8080
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/online-judge
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/online-judge/protocol/openid-connect/certs
+      ALLOWED_ORIGIN: http://localhost:4200
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  # Postgres for Keycloak
+  keycloak-db:
+    profiles: ["infra"]
+    image: postgres:16-alpine
+    container_name: keycloak-db
+    restart: always
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloakpass
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Keycloak
+  keycloak:
+    profiles: ["infra"]
+    image: quay.io/keycloak/keycloak:25.0.6
+    container_name: keycloak
+    command: start --http-port=8080 --hostname-strict=false --import-realm
+    restart: always
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloakpass
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_URL: http://keycloak:8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_RELATIVE_PATH: /
+      # Import realm on start
+      KC_IMPORT: /opt/keycloak/data/import/realm-export.json
+    volumes:
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8321:8080"
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  redis:
+    profiles: ["infra"]
+    image: redis:7-alpine
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - microservices-network
+
+  elasticsearch:
+    profiles: ["infra"]
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
+    container_name: elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - microservices-network
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  zookeeper:
+    profiles: ["infra"]
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - microservices-network
+
+  kafka:
+    profiles: ["infra"]
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9093:9092"
+      - "29093:29092"
+    depends_on:
+      zookeeper:
+        condition: service_started
+    networks:
+      - microservices-network
+
+volumes:
+  user-mysql-data:
+    driver: local
+  problem-mysql-data:
+    driver: local
+  submission-mysql-data:
+    driver: local
+  keycloak-db-data:
+    driver: local
+  elasticsearch-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  kafka-data:
+    driver: local
+
+networks:
+  microservices-network:
+    driver: bridge

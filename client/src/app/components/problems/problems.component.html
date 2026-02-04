@@ -1,0 +1,72 @@
+<div class="container">
+  <div class="header-section">
+    <h1>Problems</h1>
+    <p class="subtitle">Solve problems, master algorithms, prepare for interviews</p>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-box">
+      <input type="text" placeholder="Search problems...">
+    </div>
+    <div class="dropdowns">
+      <select class="filter-select">
+        <option>All Levels</option>
+        <option>Easy</option>
+        <option>Medium</option>
+        <option>Hard</option>
+      </select>
+      <select class="filter-select">
+        <option>All Status</option>
+        <option>Solved</option>
+        <option>Unsolved</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="problems-table-container">
+    <table class="problems-table">
+      <thead>
+        <tr>
+          <th class="status-col">Status</th>
+          <th class="title-col">Title</th>
+          <th class="difficulty-col">Difficulty</th>
+          <th class="category-col">Category</th>
+          <th class="acceptance-col">Acceptance</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (loading()) {
+          <tr><td colspan="5" class="loading">Loading...</td></tr>
+        } @else {
+          @for (problem of problems(); track problem.id) {
+            <tr (click)="goToProblem(problem.id!)">
+              <td class="status-col">
+                <!-- Mock status icon for now -->
+                <span class="status-icon"></span>
+              </td>
+              <td class="title-col">{{ problem.title }}</td>
+              <td class="difficulty-col">
+                <span class="badge" [class]="problem.difficulty.toLowerCase()">
+                  {{ problem.difficulty }}
+                </span>
+              </td>
+              <td class="category-col">
+                @if (problem.tags && problem.tags.length) {
+                  {{ problem.tags[0] }}
+                } @else {
+                  Algorithms
+                }
+              </td>
+              <td class="acceptance-col">
+                <div class="acceptance-bar">
+                  <div class="progress" style="width: 45%"></div>
+                </div>
+                <span class="percentage">45%</span>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
